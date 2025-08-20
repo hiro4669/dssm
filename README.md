@@ -40,5 +40,5 @@ You can run two types of example: executing local, using network
 1. Run `samples/Cpp_RemoteSample/write_proxy_test`
 1. Run `samples/Cpp_RemoteSample/read_proxy_test`
 
-If you want to use buffered features (recommand if you use WiFi)
+If you want to use buffered features (recommended if you use WiFi)
 1. Run `samples/Cpp_RemoteSample/read_buffer_test`
