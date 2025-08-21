@@ -12,7 +12,7 @@ noinst_HEADERS = printlog.hpp
 
 # shell scripts
 #EXTRA_DIST = ssm-advance-player killssm psssm topssm
-dist_bin_SCRIPTS = ssm-advance-player killssm psssm topssm
+dist_bin_SCRIPTS = killssm psssm topssm
 
 ## lsssm
 lsssm_SOURCES = lsssm.c
@@ -27,7 +27,6 @@ ssm_logger_LDADD = ../src/libssm.la -lm
 ## ssm-player
 ssm_player_SOURCES = ssm-player.cpp
 ssm_player_CFLAGS = $(AM_CFLAGS) -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64
-ssm_player_CXXFLAGS = $(ssm_advance_player_CFLAGS)
 ssm_player_LDADD = ../src/libssm.la -lm
 
 ## ssm-transporter

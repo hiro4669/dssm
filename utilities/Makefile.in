@@ -151,12 +151,9 @@ ssm_monitor_DEPENDENCIES = ../src/libssm.la
 ssm_monitor_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(ssm_monitor_CFLAGS) \
 	$(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
-am_ssm_player_OBJECTS = ssm_player-ssm-player.$(OBJEXT)
+am_ssm_player_OBJECTS = ssm-player.$(OBJEXT)
 ssm_player_OBJECTS = $(am_ssm_player_OBJECTS)
 ssm_player_DEPENDENCIES = ../src/libssm.la
-ssm_player_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
-	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(ssm_player_CXXFLAGS) \
-	$(CXXFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
 am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
 am__vpath_adj = case $$p in \
     $(srcdir)/*) f=`echo "$$p" | sed "s|^$$srcdirstrip/||"`;; \
@@ -202,11 +199,10 @@ depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__maybe_remake_depfiles = depfiles
 am__depfiles_remade = ../src/$(DEPDIR)/dssm_proxy-dssm-utility.Po \
 	./$(DEPDIR)/dssm_proxy-dssm-proxy.Po ./$(DEPDIR)/lsssm.Po \
-	./$(DEPDIR)/ssm_date-ssm-date.Po \
+	./$(DEPDIR)/ssm-player.Po ./$(DEPDIR)/ssm_date-ssm-date.Po \
 	./$(DEPDIR)/ssm_graph-ssm-graph.Po \
 	./$(DEPDIR)/ssm_logger-ssm-logger.Po \
-	./$(DEPDIR)/ssm_monitor-ssm-monitor.Po \
-	./$(DEPDIR)/ssm_player-ssm-player.Po
+	./$(DEPDIR)/ssm_monitor-ssm-monitor.Po
 am__mv = mv -f
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
@@ -409,7 +405,7 @@ noinst_HEADERS = printlog.hpp
 
 # shell scripts
 #EXTRA_DIST = ssm-advance-player killssm psssm topssm
-dist_bin_SCRIPTS = ssm-advance-player killssm psssm topssm
+dist_bin_SCRIPTS = killssm psssm topssm
 lsssm_SOURCES = lsssm.c
 lsssm_LDADD = ../src/libssm.la
 ssm_logger_SOURCES = ssm-logger.cpp
@@ -418,7 +414,6 @@ ssm_logger_CXXFLAGS = $(ssm_logger_CFLAGS)
 ssm_logger_LDADD = ../src/libssm.la -lm
 ssm_player_SOURCES = ssm-player.cpp
 ssm_player_CFLAGS = $(AM_CFLAGS) -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64
-ssm_player_CXXFLAGS = $(ssm_advance_player_CFLAGS)
 ssm_player_LDADD = ../src/libssm.la -lm
 
 #ssm_transporter_SOURCES = ssm-transporter.c
@@ -562,7 +557,7 @@ ssm-monitor$(EXEEXT): $(ssm_monitor_OBJECTS) $(ssm_monitor_DEPENDENCIES) $(EXTRA
 
 ssm-player$(EXEEXT): $(ssm_player_OBJECTS) $(ssm_player_DEPENDENCIES) $(EXTRA_ssm_player_DEPENDENCIES) 
 	@rm -f ssm-player$(EXEEXT)
-	$(AM_V_CXXLD)$(ssm_player_LINK) $(ssm_player_OBJECTS) $(ssm_player_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(CXXLINK) $(ssm_player_OBJECTS) $(ssm_player_LDADD) $(LIBS)
 install-dist_binSCRIPTS: $(dist_bin_SCRIPTS)
 	@$(NORMAL_INSTALL)
 	@list='$(dist_bin_SCRIPTS)'; test -n "$(bindir)" || list=; \
@@ -609,11 +604,11 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@../src/$(DEPDIR)/dssm_proxy-dssm-utility.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dssm_proxy-dssm-proxy.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/lsssm.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ssm-player.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ssm_date-ssm-date.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ssm_graph-ssm-graph.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ssm_logger-ssm-logger.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ssm_monitor-ssm-monitor.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ssm_player-ssm-player.Po@am__quote@ # am--include-marker
 
 $(am__depfiles_remade):
 	@$(MKDIR_P) $(@D)
@@ -753,20 +748,6 @@ ssm_logger-ssm-logger.obj: ssm-logger.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(ssm_logger_CXXFLAGS) $(CXXFLAGS) -c -o ssm_logger-ssm-logger.obj `if test -f 'ssm-logger.cpp'; then $(CYGPATH_W) 'ssm-logger.cpp'; else $(CYGPATH_W) '$(srcdir)/ssm-logger.cpp'; fi`
 
-ssm_player-ssm-player.o: ssm-player.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(ssm_player_CXXFLAGS) $(CXXFLAGS) -MT ssm_player-ssm-player.o -MD -MP -MF $(DEPDIR)/ssm_player-ssm-player.Tpo -c -o ssm_player-ssm-player.o `test -f 'ssm-player.cpp' || echo '$(srcdir)/'`ssm-player.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/ssm_player-ssm-player.Tpo $(DEPDIR)/ssm_player-ssm-player.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='ssm-player.cpp' object='ssm_player-ssm-player.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(ssm_player_CXXFLAGS) $(CXXFLAGS) -c -o ssm_player-ssm-player.o `test -f 'ssm-player.cpp' || echo '$(srcdir)/'`ssm-player.cpp
-
-ssm_player-ssm-player.obj: ssm-player.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(ssm_player_CXXFLAGS) $(CXXFLAGS) -MT ssm_player-ssm-player.obj -MD -MP -MF $(DEPDIR)/ssm_player-ssm-player.Tpo -c -o ssm_player-ssm-player.obj `if test -f 'ssm-player.cpp'; then $(CYGPATH_W) 'ssm-player.cpp'; else $(CYGPATH_W) '$(srcdir)/ssm-player.cpp'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/ssm_player-ssm-player.Tpo $(DEPDIR)/ssm_player-ssm-player.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='ssm-player.cpp' object='ssm_player-ssm-player.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(ssm_player_CXXFLAGS) $(CXXFLAGS) -c -o ssm_player-ssm-player.obj `if test -f 'ssm-player.cpp'; then $(CYGPATH_W) 'ssm-player.cpp'; else $(CYGPATH_W) '$(srcdir)/ssm-player.cpp'; fi`
-
 mostlyclean-libtool:
 	-rm -f *.lo
 
@@ -904,11 +885,11 @@ distclean: distclean-am
 		-rm -f ../src/$(DEPDIR)/dssm_proxy-dssm-utility.Po
 	-rm -f ./$(DEPDIR)/dssm_proxy-dssm-proxy.Po
 	-rm -f ./$(DEPDIR)/lsssm.Po
+	-rm -f ./$(DEPDIR)/ssm-player.Po
 	-rm -f ./$(DEPDIR)/ssm_date-ssm-date.Po
 	-rm -f ./$(DEPDIR)/ssm_graph-ssm-graph.Po
 	-rm -f ./$(DEPDIR)/ssm_logger-ssm-logger.Po
 	-rm -f ./$(DEPDIR)/ssm_monitor-ssm-monitor.Po
-	-rm -f ./$(DEPDIR)/ssm_player-ssm-player.Po
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-tags
@@ -957,11 +938,11 @@ maintainer-clean: maintainer-clean-am
 		-rm -f ../src/$(DEPDIR)/dssm_proxy-dssm-utility.Po
 	-rm -f ./$(DEPDIR)/dssm_proxy-dssm-proxy.Po
 	-rm -f ./$(DEPDIR)/lsssm.Po
+	-rm -f ./$(DEPDIR)/ssm-player.Po
 	-rm -f ./$(DEPDIR)/ssm_date-ssm-date.Po
 	-rm -f ./$(DEPDIR)/ssm_graph-ssm-graph.Po
 	-rm -f ./$(DEPDIR)/ssm_logger-ssm-logger.Po
 	-rm -f ./$(DEPDIR)/ssm_monitor-ssm-monitor.Po
-	-rm -f ./$(DEPDIR)/ssm_player-ssm-player.Po
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 
