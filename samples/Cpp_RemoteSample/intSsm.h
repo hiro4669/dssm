@@ -3,6 +3,7 @@
 
 #define SNAME_INT "intSsm"
 #define PNAME_DOUBLE "doubleProperty"
+#define NAME_SIZE 20
 
 typedef struct
 {
@@ -17,5 +18,11 @@ typedef struct {
 	int num1;
 	double num2;
 } intSsm_p;
+
+typedef struct {
+    int num;
+    double dnum;
+    char name[NAME_SIZE];
+} props_p;
 
 #endif

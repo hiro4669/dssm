@@ -42,11 +42,8 @@ int main(int aArgc, char **aArgv) {
 	 * data型とproperty型は ./intSsm.h に定義
 	 * 指定しているIPはループバックアドレス(自分自身)
 	 */
-	//PConnectorClient<intSsm_k, doubleProperty_p> con(SNAME_INT, 1, "192.168.11.28");
-//	PConnectorClient<intSsm_k, doubleProperty_p> con(SNAME_INT, 1);
-	DSSMApi<intSsm_k, doubleProperty_p> con(SNAME_INT, 1);
-	// dssm関連の初期化
-//	con.initDSSM();
+	//DSSMApi<intSsm_k, doubleProperty_p> con(SNAME_INT, 1);
+	DSSMApi<intSsm_k, props_p> con(SNAME_INT, 1);
 
 	/*
 	while(!con.initRemote()) {
@@ -68,7 +65,13 @@ int main(int aArgc, char **aArgv) {
 	}
 
 	// propertyにデータをセット
+    memset(con.property.name, 0, NAME_SIZE);
 	con.property.dnum = 1.5;
+	con.property.num = 5;
+    strncpy(con.property.name, "HELLO DSSM", 10);
+    con.property.name[10] = '\0';
+
+
 	// セットしたデータがメモリに書き込まれる
 	con.setProperty();
 

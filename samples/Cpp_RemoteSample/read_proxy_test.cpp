@@ -43,8 +43,8 @@ int main() {
 	 * data型とproperty型は ./intSsm.h に定義
 	 * 指定しているIPはループバックアドレス(自分自身)
 	 */
-//	PConnectorClient<intSsm_k, doubleProperty_p> con(SNAME_INT, 1);
-	DSSMApi<intSsm_k, doubleProperty_p> con(SNAME_INT, 1);
+//	DSSMApi<intSsm_k, doubleProperty_p> con(SNAME_INT, 1);
+	DSSMApi<intSsm_k, props_p> con(SNAME_INT, 1);
 
 	// dssm関連の初期化
 //	con.initDSSM();
@@ -62,7 +62,9 @@ int main() {
 	con.getProperty();
 
 	// プロパティは 変数名.property.データ でアクセス
-	printf("property -> %f\n", con.property.dnum);
+	printf("property dnum: -> %f\n", con.property.dnum);
+	printf("property num :  -> %d\n", con.property.num);
+	printf("property name:  -> %s\n", con.property.name);
 
 	// データ通信路を開く
 	// これをしないとデータを取得できない
