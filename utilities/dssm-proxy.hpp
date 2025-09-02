@@ -58,6 +58,14 @@ private:
 	TCPSERVER_INFO server;
 	TCPCLIENT_INFO client;
 
+	int readInt(char **p);
+	uint64_t readLong(char **p);
+	double readDouble(char **p);
+
+	void writeInt(char **p, int v);
+	void writeLong(char **p, uint64_t v);
+	void writeDouble(char **p, double v);
+
 public:
 	char *mData;
 	uint64_t mDataSize;
@@ -95,7 +103,7 @@ public:
 public:
 	DataCommunicator() = delete;
 	DataCommunicator(uint16_t nport, char *mData, uint64_t d_size, uint64_t h_size,
-					 SSMApiBase *pstream, PROXY_open_mode type, ProxyServer *proxy, bool isTCP = true);
+					 SSMApiBase *pstream, PROXY_open_mode type, bool isTCP = true);
 	~DataCommunicator();
 
 	void *run(void *args);

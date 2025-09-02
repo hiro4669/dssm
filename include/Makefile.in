@@ -296,7 +296,7 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-include_HEADERS = ssm.h ssm-time.h ssm.hpp ssmp.hpp ssm-log.hpp dssm-proxy-client.hpp dssm.hpp dssm-def.hpp dssm-utility.hpp libssm.h neighbor.hpp
+include_HEADERS = ssm.h ssm-time.h ssm.hpp ssmp.hpp ssm-log.hpp dssm-proxy-client.hpp dssm.hpp dssm-def.hpp dssm-utility.hpp libssm.h neighbor.hpp broadcast.hpp
 #pkginclude_HEADERS = ssm.h ssm-time.h
 #####################################
 #include_HEADERS = $(include_HEADERS) dssm-proxy-client.hpp dssm.hpp

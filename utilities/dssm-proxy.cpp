@@ -28,6 +28,7 @@
 #include "dssm-proxy.hpp"
 #include "dssm-utility.hpp"
 
+#include "broadcast.hpp"
 
 
 #define DEBUG 0
@@ -37,9 +38,7 @@ extern pid_t my_pid; // for debug
 socklen_t address_len = sizeof(struct sockaddr_in);
 
 DataCommunicator::DataCommunicator(uint16_t nport, char *mData, uint64_t d_size,
-								   uint64_t h_size, SSMApiBase *pstream, PROXY_open_mode type,
-								   ProxyServer *proxy, bool isTCP)
-{
+								   uint64_t h_size, SSMApiBase *pstream, PROXY_open_mode type, bool isTCP) {
 	this->mData = mData;
 	this->mDataSize = d_size;
 	this->ssmHeaderSize = h_size;
@@ -82,14 +81,90 @@ bool DataCommunicator::receiveData()
 	return true;
 }
 
+
+int DataCommunicator::readInt(char **p) {
+	uint8_t v1 = **p;
+	(*p)++;
+	uint8_t v2 = **p;
+	(*p)++;
+	uint8_t v3 = **p;
+	(*p)++;
+	uint8_t v4 = **p;
+	(*p)++;
+
+	int v = (int)(v1 << 24 | v2 << 16 | v3 << 8 | v4);
+	return v;
+}
+
+uint64_t DataCommunicator::readLong(char **p) {
+	uint8_t v1 = **p;
+	(*p)++;
+	uint8_t v2 = **p;
+	(*p)++;
+	uint8_t v3 = **p;
+	(*p)++;
+	uint8_t v4 = **p;
+	(*p)++;
+	uint8_t v5 = **p;
+	(*p)++;
+	uint8_t v6 = **p;
+	(*p)++;
+	uint8_t v7 = **p;
+	(*p)++;
+	uint8_t v8 = **p;
+	(*p)++;
+
+	uint64_t lv = (uint64_t)((uint64_t)v1 << 56 | (uint64_t)v2 << 48 | (uint64_t)v3 << 40 | (uint64_t)v4 << 32 | (uint64_t)v5 << 24 | (uint64_t)v6 << 16 | (uint64_t)v7 << 8 | (uint64_t)v8);
+	return lv;
+}
+
+double DataCommunicator::readDouble(char **p) {
+	char buf[8];
+	for (int i = 0; i < 8; ++i, (*p)++)
+	{
+		buf[7 - i] = **p;
+	}
+	return *(double *)buf;
+}
+
+void DataCommunicator::writeInt(char **p, int v) {
+	**p = (v >> 24) & 0xff;
+	(*p)++;
+	**p = (v >> 16) & 0xff;
+	(*p)++;
+	**p = (v >> 8) & 0xff;
+	(*p)++;
+	**p = (v >> 0) & 0xff;
+	(*p)++;
+}
+void DataCommunicator::writeLong(char **p, uint64_t v) {
+	**p = (v >> 56) & 0xff;
+	(*p)++;
+	**p = (v >> 48) & 0xff;
+	(*p)++;
+	**p = (v >> 40) & 0xff;
+	(*p)++;
+	**p = (v >> 32) & 0xff;
+	(*p)++;
+	this->writeInt(p, v);
+}
+
+void DataCommunicator::writeDouble(char **p, double v) {
+	char *dp = (char *)&v;
+	for (int i = 0; i < 8; ++i, (*p)++)
+	{
+		**p = dp[7 - i] & 0xff;
+	}
+}
+
 bool DataCommunicator::deserializeTmsg(thrd_msg *tmsg)
 {
 	memset((char *)tmsg, 0, sizeof(thrd_msg));
 	char *p = this->buf;
-	tmsg->msg_type = proxy->readLong(&p);
-	tmsg->res_type = proxy->readLong(&p);
-	tmsg->tid = proxy->readInt(&p);
-	tmsg->time = proxy->readDouble(&p);
+	tmsg->msg_type = this->readLong(&p);
+	tmsg->res_type = this->readLong(&p);
+	tmsg->tid = this->readInt(&p);
+	tmsg->time = this->readDouble(&p);
 	return true;
 }
 
@@ -97,10 +172,10 @@ bool DataCommunicator::serializeTmsg(thrd_msg *tmsg)
 {
 	// memset((char*)tmsg, 0, sizeof(thrd_msg));
 	char *p = this->buf;
-	proxy->writeLong(&p, tmsg->msg_type);
-	proxy->writeLong(&p, tmsg->res_type);
-	proxy->writeInt(&p, tmsg->tid);
-	proxy->writeDouble(&p, tmsg->time);
+	this->writeLong(&p, tmsg->msg_type);
+	this->writeLong(&p, tmsg->res_type);
+	this->writeInt(&p, tmsg->tid);
+	this->writeDouble(&p, tmsg->time);
 	return true;
 }
 
@@ -881,7 +956,7 @@ void ProxyServer::handleCommand()
 		{
 			msg.suid = nport;
 			com = new DataCommunicator(nport, mData, mDataSize, ssmHeaderSize,
-									   &stream, mType, this);
+									   &stream, mType);
 			com->start(nullptr);
 			sendMsg(MC_RES, &msg);
 			break;
@@ -890,7 +965,7 @@ void ProxyServer::handleCommand()
 		{
 			msg.suid = nport;
 			com = new DataCommunicator(nport, mData, mDataSize, ssmHeaderSize,
-									   &stream, mType, this, false);
+									   &stream, mType, false);
 			com->start(nullptr);
 			sendMsg(MC_RES, &msg);
 			break;
@@ -1045,6 +1120,7 @@ uint16_t ProxyServer::create_msg(char* buffer, std::string ipaddr_str, int port)
     len += port_str.length();
     len += 4;
 
+    std::cout << "create_msg " << len << std::endl;
     int idx = 0;
     buffer[idx++] = (len >> 8) & 0xff;
     buffer[idx++] = (len >> 0) & 0xff;
