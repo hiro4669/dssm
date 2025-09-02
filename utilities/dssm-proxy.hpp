@@ -10,6 +10,8 @@
 #include <vector>
 #include <ifaddrs.h>
 
+#include "broadcast.hpp"
+
 #define BUFFER_SIZE 1024	   /* バッファバイト数 */
 
 /* クライアントからの接続を待つサーバの情報を表現する構造体 */
@@ -50,7 +52,7 @@ struct BROADCAST_RECVINFO {
     struct sockaddr_in addr;
 };
 
-class ProxyServer;
+//class ProxyServer;
 
 class DataCommunicator :  public Thread
 {
@@ -79,7 +81,7 @@ public:
 	bool isTCP;
 
 	SSMApiBase *pstream;
-	ProxyServer *proxy;
+//	ProxyServer *proxy;
 
 	bool sopen();
 	bool rwait();
@@ -110,6 +112,7 @@ public:
 	void handleBufferRead();
 };
 
+template <typename T = Dummy>
 class ProxyServer
 {
 private:

@@ -48,7 +48,7 @@ DataCommunicator::DataCommunicator(uint16_t nport, char *mData, uint64_t d_size,
 	// streamはコピーされる.
 	this->pstream = pstream;
 	this->mType = type;
-	this->proxy = proxy;
+//	this->proxy = proxy;
 	this->isTCP = isTCP;
 
 	this->buf = (char *)malloc(sizeof(thrd_msg));
@@ -244,8 +244,8 @@ void DataCommunicator::handleBuffer()
 				fprintf(stderr, "[%s] SSMApi::read error.\n", pstream->getStreamName());
 			}
 			char *p = mData;
-			proxy->writeInt(&p, pstream->timeId);
-			proxy->writeDouble(&p, pstream->time);
+			this->writeInt(&p, pstream->timeId);
+			this->writeDouble(&p, pstream->time);
 			if (!sendBulkData(mData, mFullDataSize))
 			{
 				fprintf( stderr, "[%d] ", count );
@@ -504,8 +504,8 @@ bool DataCommunicator::UDPrwait()
 
 
 
-
-ProxyServer::ProxyServer()
+template <typename T>
+ProxyServer<T>::ProxyServer()
 {
 	nport = SERVER_PORT;
 	mData = NULL;
@@ -519,7 +519,8 @@ ProxyServer::ProxyServer()
 	dssmMsgLen = dssm::util::countDssmMsgLength();
 }
 
-ProxyServer::~ProxyServer()
+template <typename T>
+ProxyServer<T>::~ProxyServer()
 {
 	this->server_close();
 	free(mData);
@@ -528,7 +529,8 @@ ProxyServer::~ProxyServer()
 	com = nullptr;
 }
 
-bool ProxyServer::init()
+template <typename T>
+bool ProxyServer<T>::init()
 {
 	setupSigHandler();
 	memset(&this->server, 0, sizeof(this->server));
@@ -540,7 +542,8 @@ bool ProxyServer::init()
 	return this->open();
 }
 
-bool ProxyServer::open()
+template <typename T>
+bool ProxyServer<T>::open()
 {
 	this->server.wait_socket = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
 	int flag = 1;
@@ -573,7 +576,8 @@ bool ProxyServer::open()
 	return true;
 }
 
-bool ProxyServer::wait()
+template <typename T>
+bool ProxyServer<T>::wait()
 {
 	memset(&this->client, 0, sizeof(this->client));
 	this->client.data_socket = -1;
@@ -593,7 +597,8 @@ bool ProxyServer::wait()
 	fprintf(stderr, "hwait::End\n");
 }
 
-bool ProxyServer::server_close()
+template <typename T>
+bool ProxyServer<T>::server_close()
 {
 	if (this->server.wait_socket != -1)
 	{
@@ -603,7 +608,8 @@ bool ProxyServer::server_close()
 	return true;
 }
 
-bool ProxyServer::client_close()
+template <typename T>
+bool ProxyServer<T>::client_close()
 {
 	if (this->client.data_socket != -1)
 	{
@@ -613,7 +619,8 @@ bool ProxyServer::client_close()
 	return true;
 }
 
-int ProxyServer::readInt(char **p)
+template <typename T>
+int ProxyServer<T>::readInt(char **p)
 {
 	uint8_t v1 = **p;
 	(*p)++;
@@ -628,7 +635,8 @@ int ProxyServer::readInt(char **p)
 	return v;
 }
 
-uint64_t ProxyServer::readLong(char **p)
+template <typename T>
+uint64_t ProxyServer<T>::readLong(char **p)
 {
 	uint8_t v1 = **p;
 	(*p)++;
@@ -651,7 +659,8 @@ uint64_t ProxyServer::readLong(char **p)
 	return lv;
 }
 
-double ProxyServer::readDouble(char **p)
+template <typename T>
+double ProxyServer<T>::readDouble(char **p)
 {
 	char buf[8];
 	for (int i = 0; i < 8; ++i, (*p)++)
@@ -661,15 +670,16 @@ double ProxyServer::readDouble(char **p)
 	return *(double *)buf;
 }
 
-void ProxyServer::readRawData(char **p, char *d, int len)
+template <typename T>
+void ProxyServer<T>::readRawData(char **p, char *d, int len)
 {
 	for (int i = 0; i < len; ++i, (*p)++)
 	{
 		d[i] = **p;
 	}
 }
-//char **pにvを書き込む
-void ProxyServer::writeInt(char **p, int v)
+template <typename T>
+void ProxyServer<T>::writeInt(char **p, int v)
 {
 	**p = (v >> 24) & 0xff;
 	(*p)++;
@@ -680,8 +690,8 @@ void ProxyServer::writeInt(char **p, int v)
 	**p = (v >> 0) & 0xff;
 	(*p)++;
 }
-//char **pにvを書き込む
-void ProxyServer::writeLong(char **p, uint64_t v)
+template <typename T>
+void ProxyServer<T>::writeLong(char **p, uint64_t v)
 {
 	**p = (v >> 56) & 0xff;
 	(*p)++;
@@ -694,7 +704,8 @@ void ProxyServer::writeLong(char **p, uint64_t v)
 	this->writeInt(p, v);
 }
 
-void ProxyServer::writeDouble(char **p, double v)
+template <typename T>
+void ProxyServer<T>::writeDouble(char **p, double v)
 {
 	char *dp = (char *)&v;
 	for (int i = 0; i < 8; ++i, (*p)++)
@@ -703,13 +714,15 @@ void ProxyServer::writeDouble(char **p, double v)
 	}
 }
 
-void ProxyServer::writeRawData(char **p, char *d, int len)
+template <typename T>
+void ProxyServer<T>::writeRawData(char **p, char *d, int len)
 {
 	for (int i = 0; i < len; ++i, (*p)++)
 		**p = d[i];
 }
 
-void ProxyServer::deserializeMessage(ssm_msg *msg, char *buf)
+template <typename T>
+void ProxyServer<T>::deserializeMessage(ssm_msg *msg, char *buf)
 {
 	msg->msg_type = readLong(&buf);
 	msg->res_type = readLong(&buf);
@@ -722,7 +735,8 @@ void ProxyServer::deserializeMessage(ssm_msg *msg, char *buf)
 	msg->saveTime = readDouble(&buf);
 }
 
-int ProxyServer::receiveMsg(ssm_msg *msg, char *buf)
+template <typename T>
+int ProxyServer<T>::receiveMsg(ssm_msg *msg, char *buf)
 {
 	int len = recv(this->client.data_socket, buf, this->dssmMsgLen, 0);
 	if (len > 0)	
@@ -732,7 +746,8 @@ int ProxyServer::receiveMsg(ssm_msg *msg, char *buf)
 	return len;
 }
 
-int ProxyServer::sendMsg(int cmd_type, ssm_msg *msg)
+template <typename T>
+int ProxyServer<T>::sendMsg(int cmd_type, ssm_msg *msg)
 {
 	ssm_msg msgbuf;
 //	uint64_t len;
@@ -764,7 +779,8 @@ int ProxyServer::sendMsg(int cmd_type, ssm_msg *msg)
 	return len;
 }
 
-void ProxyServer::handleCommand()
+template <typename T>
+void ProxyServer<T>::handleCommand()
 {	
 	ssm_msg msg;
 	char *buf = (char *)malloc(sizeof(ssm_msg));
@@ -994,13 +1010,15 @@ END_PROC:
 	endSSM();
 }
 
-void ProxyServer::setSSMType(PROXY_open_mode mode)
+template <typename T>
+void ProxyServer<T>::setSSMType(PROXY_open_mode mode)
 {
 	mType = mode;
 }
 
 /* for broadcast receiving  */
-int ProxyServer::set_rbr_info(BROADCAST_RECVINFO *binfo) {
+template <typename T>
+int ProxyServer<T>::set_rbr_info(BROADCAST_RECVINFO *binfo) {
 	binfo->sd = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
 	if (binfo -> sd < 0) {
 		fprintf(stderr, "cannot open broadcast receive socket\n");
@@ -1017,11 +1035,13 @@ int ProxyServer::set_rbr_info(BROADCAST_RECVINFO *binfo) {
 	return 0;
 }
 
-void ProxyServer::rbr_close(BROADCAST_RECVINFO *binfo) {
+template <typename T>
+void ProxyServer<T>::rbr_close(BROADCAST_RECVINFO *binfo) {
 	if (binfo->sd != 0) close(binfo->sd);
 }
 
-std::pair<std::string , std::string> ProxyServer::parse_data(char* buf, int msg_len) {
+template <typename T>
+std::pair<std::string , std::string> ProxyServer<T>::parse_data(char* buf, int msg_len) {
 	if (msg_len < 0) {
         fprintf(stderr, "something happend in parse\n");
         return {"", ""};
@@ -1042,14 +1062,16 @@ std::pair<std::string , std::string> ProxyServer::parse_data(char* buf, int msg_
     return {ip_addr_str, port_str};
 }
 
-std::pair<std::string, std::string> ProxyServer::recv_br_msg(BROADCAST_RECVINFO *binfo) {
+template <typename T>
+std::pair<std::string, std::string> ProxyServer<T>::recv_br_msg(BROADCAST_RECVINFO *binfo) {
 	char recv_msg[MAXRECVSTRING];
 	int msg_len = recvfrom(binfo->sd, recv_msg, MAXRECVSTRING, 0, NULL, 0);
     std::pair<std::string, std::string> hinfo = parse_data(recv_msg, msg_len);
 	return hinfo;
 }
 
-void ProxyServer::receive_notification() {
+template <typename T>
+void ProxyServer<T>::receive_notification() {
 	std::cout << "receive notification start" << std::endl;
 	BROADCAST_RECVINFO binfo;
 	memset(&binfo, 0, sizeof(BROADCAST_RECVINFO));
@@ -1073,7 +1095,8 @@ void ProxyServer::receive_notification() {
 /* end of broadcast receiving  */
 
 /* for broadcast sending */
-int ProxyServer::sbr_init(BROADCAST_SENDINFO *binfo, const char *ipaddr, const int port) {
+template <typename T>
+int ProxyServer<T>::sbr_init(BROADCAST_SENDINFO *binfo, const char *ipaddr, const int port) {
 	memset(binfo, 0, sizeof(BROADCAST_SENDINFO));
 	binfo->ipaddr = ipaddr;
 	binfo->port = port;
@@ -1081,7 +1104,8 @@ int ProxyServer::sbr_init(BROADCAST_SENDINFO *binfo, const char *ipaddr, const i
 	return 0;
 }
 
-int ProxyServer::set_sbr_info(BROADCAST_SENDINFO *binfo) {
+template <typename T>
+int ProxyServer<T>::set_sbr_info(BROADCAST_SENDINFO *binfo) {
 	if ((binfo->sd = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
 		fprintf(stderr, "cannot open broadcast send socket\n");
 		return -1;
@@ -1098,7 +1122,8 @@ int ProxyServer::set_sbr_info(BROADCAST_SENDINFO *binfo) {
 	return 0;
 }
 
-void ProxyServer::send_br_msg(BROADCAST_SENDINFO *binfo, char *msg, int msg_len) {
+template <typename T>
+void ProxyServer<T>::send_br_msg(BROADCAST_SENDINFO *binfo, char *msg, int msg_len) {
 	unsigned int sent_len = 0;
     binfo->msg = msg;
     binfo->msg_len = msg_len;
@@ -1109,11 +1134,14 @@ void ProxyServer::send_br_msg(BROADCAST_SENDINFO *binfo, char *msg, int msg_len)
 	}
 	return;
 }
-void ProxyServer::sbr_close(BROADCAST_SENDINFO *binfo) {
+
+template <typename T>
+void ProxyServer<T>::sbr_close(BROADCAST_SENDINFO *binfo) {
 	if (binfo->sd != 0) close(binfo->sd);	
 }
 
-uint16_t ProxyServer::create_msg(char* buffer, std::string ipaddr_str, int port) {
+template <typename T>
+uint16_t ProxyServer<T>::create_msg(char* buffer, std::string ipaddr_str, int port) {
 	uint16_t len = 0;	
     std::string port_str = std::to_string(port);
     len += ipaddr_str.length();
@@ -1139,7 +1167,8 @@ uint16_t ProxyServer::create_msg(char* buffer, std::string ipaddr_str, int port)
 
 
 
-void ProxyServer::send_notification() {
+template <typename T>
+void ProxyServer<T>::send_notification() {
 	//std::cout << "send notification start" << std::endl;
 	std::pair<std::string, std::string> ainfo = get_interface_info();
 	if (ainfo.first.empty()) {
@@ -1206,7 +1235,8 @@ bool ProxyServer::run(bool notify) {
 
 
 
-bool ProxyServer::run(bool notify)
+template <typename T>
+bool ProxyServer<T>::run(bool notify)
 {
 	if (notify) {
 		if (!initSSM()) {
@@ -1254,7 +1284,8 @@ bool ProxyServer::run(bool notify)
 }
 
 
-void ProxyServer::setupSigHandler()
+template <typename T>
+void ProxyServer<T>::setupSigHandler()
 {
 	//std::cout << "end" << std::endl;
 	struct sigaction act;
@@ -1267,7 +1298,8 @@ void ProxyServer::setupSigHandler()
 	
 }
 
-void ProxyServer::catchSignal(int signo)
+template <typename T>
+void ProxyServer<T>::catchSignal(int signo)
 {
 	printf("catch signal\n");
 	pid_t child_pid = 0;
@@ -1281,7 +1313,8 @@ void ProxyServer::catchSignal(int signo)
 	} while (child_pid > 0);
 }
 
-bool ProxyServer::shutdown_children() {
+template <typename T>
+bool ProxyServer<T>::shutdown_children() {
 	for (int i = 0; i < (int)this->pids.size(); ++i) {
 		if (kill(this->pids.at(i), SIGKILL) == -1) {
 			return false;
@@ -1291,7 +1324,7 @@ bool ProxyServer::shutdown_children() {
 	return true;
 }
 
-static ProxyServer *pserver = nullptr;
+static ProxyServer<> *pserver = nullptr;
 
 static void signal_handler(int signum) {
 	if (pserver != nullptr) {
@@ -1329,7 +1362,7 @@ int main(int argc, char* argv[])
     sa.sa_flags |= SA_RESTART;
     sigaction(SIGINT, &sa, NULL);
 
-	pserver = new ProxyServer();
+	pserver = new ProxyServer<>();
 	pserver->init();
 	pserver->run(use_broadcast);	
 	if (pserver != nullptr) {
