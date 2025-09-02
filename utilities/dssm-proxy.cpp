@@ -19,6 +19,7 @@
 
 #include <errno.h>
 #include <sys/fcntl.h>
+#include <tuple>
 
 #include "ssm-time.h"
 #include "ssm.h"
@@ -1041,16 +1042,18 @@ void ProxyServer<T>::rbr_close(BROADCAST_RECVINFO *binfo) {
 }
 
 template <typename T>
-std::pair<std::string , std::string> ProxyServer<T>::parse_data(char* buf, int msg_len) {
+//std::pair<std::string , std::string> ProxyServer<T>::parse_data(char* buf, int msg_len) {
+std::tuple<std::string , std::string, T> ProxyServer<T>::parse_data(char* buf, int msg_len) {
+    T data;
 	if (msg_len < 0) {
         fprintf(stderr, "something happend in parse\n");
-        return {"", ""};
+        return {"", "", data};
     }
     int idx = 0;
     uint16_t len = (uint16_t)(buf[idx] << 8 | buf[idx + 1]);
     if (len != msg_len) {
         fprintf(stderr, "something happend in parse\n");
-        return {"", ""};
+        return {"", "", data};
     }
 
     idx += 2;
@@ -1059,14 +1062,28 @@ std::pair<std::string , std::string> ProxyServer<T>::parse_data(char* buf, int m
     idx += ip_len;
     uint8_t port_len = buf[idx++];    
     std::string port_str(&buf[idx], 0, port_len);
-    return {ip_addr_str, port_str};
+    data = *((T*)&buf[idx + port_len]);
+
+    /*
+    for (int i = 0; i < sizeof(T); ++i) { // for debug
+        printf("%02x ", ((char*)&data)[i]);
+    }
+    printf("\n");
+    printf("msg_len = %d\n", msg_len);
+    */
+
+
+
+
+    return {ip_addr_str, port_str, data};
+    //return {ip_addr_str, port_str};
 }
 
 template <typename T>
-std::pair<std::string, std::string> ProxyServer<T>::recv_br_msg(BROADCAST_RECVINFO *binfo) {
+std::tuple<std::string, std::string, T> ProxyServer<T>::recv_br_msg(BROADCAST_RECVINFO *binfo) {
 	char recv_msg[MAXRECVSTRING];
 	int msg_len = recvfrom(binfo->sd, recv_msg, MAXRECVSTRING, 0, NULL, 0);
-    std::pair<std::string, std::string> hinfo = parse_data(recv_msg, msg_len);
+    std::tuple<std::string, std::string, T> hinfo = parse_data(recv_msg, msg_len);
 	return hinfo;
 }
 
@@ -1077,18 +1094,31 @@ void ProxyServer<T>::receive_notification() {
 	memset(&binfo, 0, sizeof(BROADCAST_RECVINFO));
 	binfo.port = BR_PORT;
 	this->set_rbr_info(&binfo);
+    std::string ipaddr;
+    std::string port;
+    T br_data;
+
 
 	while (true) {
-		std::pair<std::string, std::string> hinfo = this->recv_br_msg(&binfo);
-		if (!hinfo.first.empty()) {
-			// TODO: connect to ssm_coordinator 
-			std::cout << hinfo.first << std::endl;
-        	std::cout << hinfo.second << std::endl;		
-			this->stream.addInfo(hinfo.first.c_str(), hinfo.first.length(), (uint16_t)stoi(hinfo.second));
+		//std::pair<std::string, std::string> hinfo = this->recv_br_msg(&binfo);
+		//std::tuple<std::string, std::string, T> hinfo = this->recv_br_msg(&binfo);
+	//	std::tuple<std::string, std::string, T> hinfo = this->recv_br_msg(&binfo);
+        std::tie(ipaddr, port, br_data) = this->recv_br_msg(&binfo);
+        if (!ipaddr.empty()) {
+            std::cout << "ipaddr: " << ipaddr << std::endl;
+            std::cout << "port: " << port << std::endl;
+            this->stream.addInfo(ipaddr.c_str(), ipaddr.length(), (uint16_t)stoi(port));
+        }
+
+//		if (!hinfo.first.empty()) {
+//			// TODO: connect to ssm_coordinator 
+//			std::cout << hinfo.first << std::endl;
+ //       	std::cout << hinfo.second << std::endl;		
+//			this->stream.addInfo(hinfo.first.c_str(), hinfo.first.length(), (uint16_t)stoi(hinfo.second));
 			//this->stream.addInfo(data, 16, 8080);
 
 
-		}
+//		}
 	}
 }
 
@@ -1147,6 +1177,7 @@ uint16_t ProxyServer<T>::create_msg(char* buffer, std::string ipaddr_str, int po
     len += ipaddr_str.length();
     len += port_str.length();
     len += 4;
+    len += sizeof(T);
 
     std::cout << "create_msg " << len << std::endl;
     int idx = 0;
@@ -1157,10 +1188,20 @@ uint16_t ProxyServer<T>::create_msg(char* buffer, std::string ipaddr_str, int po
     idx += ipaddr_str.length();
     buffer[idx++] = port_str.length();    
     memcpy(&buffer[idx], port_str.c_str(), port_str.length());    
+
+    idx += port_str.length();
+    std::cout << "total len = " << idx << std::endl;
+
+    uint16_t data_len = sizeof(T);
+    std::cout << "data_len = " << data_len << std::endl;
+    memcpy(&buffer[idx], &br_data, sizeof(T));
+
+    /*
     for (int i = 0; i < len; ++i) { // for debug
         printf("%02x ", buffer[i]);
     }
     printf("\n");
+    */
 
 	return len;
 }
@@ -1175,8 +1216,9 @@ void ProxyServer<T>::send_notification() {
         fprintf(stderr, "something happend\n");
         return;
     }
-	//std::cout << ainfo.first << std::endl;
-	//std::cout << ainfo.second << std::endl;
+	std::cout << "ipaddr: " << ainfo.first << std::endl;
+	std::cout << "br addr" << ainfo.second << std::endl;
+    std::cout << "br_datasize = " << sizeof(this->br_data) << std::endl;
 	char buffer[256];
     //uint16_t _msg_len = create_msg(buffer, ainfo.first, SERVER_PORT); // specify self ip
     create_msg(buffer, ainfo.first, SERVER_PORT); // specify self ip
@@ -1324,7 +1366,8 @@ bool ProxyServer<T>::shutdown_children() {
 	return true;
 }
 
-static ProxyServer<> *pserver = nullptr;
+//static ProxyServer<> *pserver = nullptr;
+static ProxyServer<br_message> *pserver = nullptr;
 
 static void signal_handler(int signum) {
 	if (pserver != nullptr) {
@@ -1362,7 +1405,10 @@ int main(int argc, char* argv[])
     sa.sa_flags |= SA_RESTART;
     sigaction(SIGINT, &sa, NULL);
 
-	pserver = new ProxyServer<>();
+	pserver = new ProxyServer<br_message>();
+    pserver->br_data.ival = 0xffff;
+    pserver->br_data.dval = 3.14;
+
 	pserver->init();
 	pserver->run(use_broadcast);	
 	if (pserver != nullptr) {
