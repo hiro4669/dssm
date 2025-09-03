@@ -6,6 +6,8 @@
 #include <netinet/in.h>
 #include "Thread.hpp"
 #include "dssm-def.hpp"
+#include <sys/ipc.h>
+#include <sys/msg.h>
 
 #include <vector>
 #include <ifaddrs.h>
@@ -157,6 +159,11 @@ private:
 	std::pair<std::string , std::string> parse_data(char* buf, int msg_len);
 	void receive_notification();
 	
+    /* for msg_queue */
+    int msq_id;
+    int is_check_msgque;
+    bool open_msgque();
+    void handle_msg();
 
 	
 

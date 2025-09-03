@@ -12,6 +12,8 @@
 
 #include <iostream>
 #include <string>
+#include <sys/ipc.h>
+#include <sys/msg.h>
 
 #include "ssm.h"
 #include "dssm-proxy-client.hpp"
@@ -63,6 +65,9 @@ void PConnector::initPConnector() {
 	dssmMsgLen = dssm::util::countDssmMsgLength();
 	memset(tbuf, 0, sizeof(thrd_msg));
 	conType = TCP_CONNECT;
+
+    my_pid = -1;
+    msq_id = -1;
 }
 
 int PConnector::readInt(char **p) {
@@ -377,11 +382,25 @@ bool PConnector::UDPconnectToDataServer(const char* serverName, int port) {
 	return true;
 }
 
+bool PConnector::open_msgque() {
+
+	if( ( msq_id = msgget( ( key_t ) PRQ_KEY, 0666 ) ) < 0 ) {
+        fprintf(stderr, "msg queue error\n");
+    }
+    my_pid = getpid();
+    return true;
+}
+
 bool PConnector::initRemote() {
 	bool r = true;
 	ssm_msg msg;
 
-	//if(!connectToServer(ipaddr, SERVER_PORT)) return false;
+    if ( !open_msgque() ) {
+        fprintf(stderr, "Cannot use broadcast\n");
+        return false;
+    } else {
+        fprintf(stderr, "msq_id=%d\n", msq_id);
+    }
 
 	while (!connectToServer(ipaddr, SERVER_PORT)) {
 		fprintf(stderr, "wait 2 second to connect\n");

@@ -1,12 +1,18 @@
 #ifndef _DSSM_DEF_HPP_
 #define _DSSM_DEF_HPP_
 
+#include <cstdint>
 //** DSSMのための定義を追加 ******************************************* ----->
 #define SERVER_PORT 8080	   /* サーバ用PORT */
 #define SERVER_IP 0x00000000UL /* サーバ用待ち受けIP */
 
 #define BR_PORT 12345          /* ブロードキャスト待受ポート */
 #define MAXRECVSTRING 256      /* ブロードキャストメッセージの最大長 */
+
+#define PRQ_KEY 0x3293
+
+#define DMSG_CMD      1000
+#define DMSG_MAX_SIZE 2048
 
 /* proxy-clientで使うコマンド群 */
 typedef enum {
@@ -50,6 +56,17 @@ typedef struct {
 	int32_t tid;
 	ssmTimeT time;   //
 } thrd_msg;
+
+typedef struct {
+    long msg_type;
+    long res_type;
+    int  cmd_type;
+    uint8_t name[DMSG_MAX_SIZE];
+} dssm_msg;  
+
+#define DMSG_SIZE (sizeof(dssm_msg) - sizeof(long))
+
+
 // <-------- DSSMのための定義を追加
 
 

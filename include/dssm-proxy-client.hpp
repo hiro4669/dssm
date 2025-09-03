@@ -63,6 +63,11 @@ private:
 	bool sendData(const char *data, uint64_t size);
 	bool recvData(); // read data recv
 
+    // for msg_queue 
+    pid_t my_pid;
+    int msq_id;
+    bool open_msgque();
+
 protected:
 
 	double saveTime;

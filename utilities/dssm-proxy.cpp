@@ -517,6 +517,8 @@ ProxyServer::ProxyServer()
 	com = nullptr;
 	mType = WRITE_MODE;
 	dssmMsgLen = dssm::util::countDssmMsgLength();
+    msq_id = -1;
+    is_check_msgque = 1;
 }
 
 ProxyServer::~ProxyServer()
@@ -537,7 +539,30 @@ bool ProxyServer::init()
 	this->server.server_addr.sin_addr.s_addr = htonl(SERVER_IP);
 	this->server.server_addr.sin_port = htons(SERVER_PORT);
 
+    this->open_msgque(); // initialize msg_queue
+
 	return this->open();
+}
+
+bool ProxyServer::open_msgque()
+{
+    if (is_check_msgque) {
+        //msq_id = msgget(PRQ_KEY, IPC_CREAT | IPC_EXCL | 0666);
+        msq_id = msgget(PRQ_KEY, IPC_CREAT | 0666);
+    } else {
+        msq_id = msgget(PRQ_KEY, IPC_CREAT | 0666);
+    }
+
+    if (msq_id < 0) {
+        perror("msgget");
+        return false;
+    }
+	if( errno == EEXIST ) {
+		fprintf( stderr, "ERROR : message queue is already exist.\n" );
+		fprintf( stderr, "maybe dssm-proxy has started.\n" );
+	}
+
+    return true;
 }
 
 bool ProxyServer::open()
@@ -1168,41 +1193,24 @@ void ProxyServer::send_notification() {
 }
 /* end of for send broadcast */
 
+void ProxyServer::handle_msg() {
+    printf("handle msg start\n");
+    dssm_msg dmsg;
+    int len;
+    
+    while (true) {
+        len = msgrcv(msq_id, &dmsg, DMSG_SIZE, DMSG_CMD, 0);
+        if (len < 0) {
+            if (errno == EINTR) continue;
+            perror("msgrcv");
+            break;
+        }
+        printf("receive msg %d\n", dmsg.cmd_type);
+    }   
 
-/*
-bool ProxyServer::run(bool notify) {
-
-	if (!initSSM()) {
-		fprintf(stderr, "init ssm error in ssm-proxy run\n");
-		return false;
-	} 
-
-	char data[16];
-	memset(data, 0, 16);
-	memcpy(data, "192.168.0.1", 11);
-
-	//for (int i = 0; i < 16; ++i) {
-		//printf("%02x ", data[i]);
-	//}
-	//printf("\n");
-	
-	stream.addInfo(data, 11, 8080);
-
-	return true;
+    printf("end of handle msg\n");
 }
-*/
 
-
-//getInfo Test
-/*
-bool ProxyServer::run(bool notify) {
-	if (!initSSM()) {
-		fprintf(stderr, "init ssm error in ssm-proxy run\n");
-		return false;
-	} 
-	stream.getInfo();
-}
-*/
 
 
 
@@ -1224,6 +1232,11 @@ bool ProxyServer::run(bool notify)
 		});
 		send_notith.detach();
 	}
+
+    std::thread handle_msgth([this]() {
+        this->handle_msg();
+    });
+    handle_msgth.detach();
 
 
 	while (wait())
