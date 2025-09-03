@@ -3,16 +3,12 @@
 
 #include "libssm.h"
 #include "ssm.hpp"
-#include <arpa/inet.h>
 #include <netinet/in.h>
 #include "Thread.hpp"
 #include "dssm-def.hpp"
 
 #include <vector>
 #include <ifaddrs.h>
-#include <tuple>
-
-#include "broadcast.hpp"
 
 #define BUFFER_SIZE 1024	   /* バッファバイト数 */
 
@@ -54,7 +50,7 @@ struct BROADCAST_RECVINFO {
     struct sockaddr_in addr;
 };
 
-//class ProxyServer;
+class ProxyServer;
 
 class DataCommunicator :  public Thread
 {
@@ -83,7 +79,7 @@ public:
 	bool isTCP;
 
 	SSMApiBase *pstream;
-//	ProxyServer *proxy;
+	ProxyServer *proxy;
 
 	bool sopen();
 	bool rwait();
@@ -114,7 +110,6 @@ public:
 	void handleBufferRead();
 };
 
-template <typename T = Dummy>
 class ProxyServer
 {
 private:
@@ -158,10 +153,8 @@ private:
 	/* for broadcast receiving */
 	int set_rbr_info(BROADCAST_RECVINFO *binfo);
 	void rbr_close(BROADCAST_RECVINFO *binfo);
-	//std::pair<std::string , std::string> recv_br_msg(BROADCAST_RECVINFO *binfo);
-	std::tuple<std::string , std::string, T> recv_br_msg(BROADCAST_RECVINFO *binfo);
-//	std::pair<std::string , std::string> parse_data(char* buf, int msg_len);
-	std::tuple<std::string , std::string, T> parse_data(char* buf, int msg_len);
+	std::pair<std::string , std::string> recv_br_msg(BROADCAST_RECVINFO *binfo);
+	std::pair<std::string , std::string> parse_data(char* buf, int msg_len);
 	void receive_notification();
 	
 
@@ -190,7 +183,6 @@ public:
 
 	void deserializeMessage(ssm_msg *msg, char *buf);
 	
-    T br_data;
 };
 
 /* get ip address information */
@@ -216,6 +208,7 @@ static std::pair<std::string, std::string> get_interface_info() {
         uint32_t netmask = ((struct sockaddr_in*)p->ifa_netmask)->sin_addr.s_addr;
         uint32_t net_addr = ip_addr & netmask;
         br_addr = net_addr | ~netmask;
+            
     }
     
     if (br_addr > 0) {        
