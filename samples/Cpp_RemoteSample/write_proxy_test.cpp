@@ -32,6 +32,13 @@ void ctrlC(int aStatus)
 // Ctrl-C による正常終了を設定
 inline void setSigInt(){ signal(SIGINT, ctrlC); }
 
+typedef struct {
+    int ival;
+    double dval;
+    char cval[32];
+} param;
+
+
 int main(int aArgc, char **aArgv) {
 	/*
 	 * 変数の宣言
@@ -45,19 +52,43 @@ int main(int aArgc, char **aArgv) {
 	//DSSMApi<intSsm_k, doubleProperty_p> con(SNAME_INT, 1);
 	DSSMApi<intSsm_k, props_p> con(SNAME_INT, 1);
 
-	/*
-	while(!con.initRemote()) {
-		printf("waitwait");
-		sleep(2);
-	}
-	*/
+
+    param p;
+    p.ival = 123;
+    p.dval = 456.789;
+    strncpy(p.cval, "Hello DSSM", 32);
+    void* data = malloc(sizeof(param));
+    memset(data, 0, sizeof(param));
+    memcpy(data, (char*)&p, sizeof(param));
+
+    /*
+    for (int i = 0; i < sizeof(param); ++i) {
+        if (i  % 16 == 0) printf("\n");
+        printf("%02x ", ((unsigned char*)data)[i]);
+    }
+    printf("\n");
+    */
+
+    dssm_msg msg;
+    memset(msg.data, 0, DMSG_MAX_SIZE);
+    msg.data_len = sizeof(param);
+    printf("data_len = %d\n", msg.data_len);
+    memcpy(msg.data, (char*)data, sizeof(param));
+    free(data);
+
+    /*
+    for (int i = 0; i < sizeof(dssm_msg); ++i) {
+        if (i  % 16 == 0) printf("\n");
+        printf("%02x ", ((unsigned char*)&msg)[i]);
+    }
+    exit(1);
+    */
+
 
 	con.initRemote();
 
-    con.send_msg(DMC_BR_START, NULL);
-    dssm_msg msg;
+    con.send_msg(DMC_BR_START, &msg);
     con.receive_msg(&msg);
-
     printf("receive msg = %ld\n", msg.res_type);
 
 

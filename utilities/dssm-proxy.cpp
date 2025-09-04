@@ -1198,6 +1198,15 @@ void ProxyServer::handle_msg() {
     dssm_msg dmsg;
     int len;
     
+    // for test
+    /*
+    typedef struct {
+        int ival;
+        double dval;
+        char cval[32];
+    } param;
+    */
+
     while (true) {
         len = msgrcv(msq_id, &dmsg, DMSG_SIZE, DMSG_CMD, 0);
         if (len < 0) {
@@ -1212,9 +1221,23 @@ void ProxyServer::handle_msg() {
             }
             case DMC_BR_START: {
                 std::cout << "start broadcast" << std::endl;
+                /*
+                printf("data_len = %d\n", dmsg.data_len);
+                for (int i = 0; i < dmsg.data_len; ++i) {
+                    if (i % 16 == 0) printf("\n");
+                    printf("%02x ", dmsg.data[i]);
+                }
+                printf("\n");
+                printf("end\n");
+                param *p = (param *)dmsg.data;
+                printf("ival = %d\n", p->ival);
+                printf("dval = %f\n", p->dval);
+                printf("cval = %s\n", p->cval);
+
                 dmsg.msg_type = dmsg.res_type;
                 dmsg.cmd_type = DMSG_RES;
                 dmsg.res_type = 0xffff;
+                */
 
 
                 if (msgsnd(msq_id, &dmsg, DMSG_SIZE, 0) < 0) {

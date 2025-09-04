@@ -13,7 +13,7 @@
 
 #define DMSG_CMD      1000
 #define DMSG_RES      1001
-#define DMSG_MAX_SIZE 2048
+#define DMSG_MAX_SIZE 1024
 
 /* proxy-clientで使うコマンド群 */
 typedef enum {
@@ -62,7 +62,8 @@ typedef struct {
     long msg_type;
     long res_type;
     int  cmd_type;
-    uint8_t name[DMSG_MAX_SIZE];
+    int  data_len;
+    uint8_t data[DMSG_MAX_SIZE];
 } dssm_msg;  
 
 
