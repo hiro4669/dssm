@@ -519,6 +519,8 @@ ProxyServer::ProxyServer()
 	dssmMsgLen = dssm::util::countDssmMsgLength();
     msq_id = -1;
     is_check_msgque = 1;
+    brdata_len = 0;
+    memset(br_buffer, 0, DMSG_MAX_SIZE);
 }
 
 ProxyServer::~ProxyServer()
@@ -1193,6 +1195,26 @@ void ProxyServer::send_notification() {
 }
 /* end of for send broadcast */
 
+
+/* update br_message */
+void ProxyServer::update_brdata(uint8_t* data, uint16_t len) {
+    std::cout << "update brdata " << len << std::endl;
+    std::lock_guard<std::mutex> lock(mtx);
+    memcpy(br_buffer, data, len);
+    brdata_len = len;
+    // test
+    /*
+    for (int i = 0; i < brdata_len; ++i) {
+        if (i % 16 == 0) printf("\n");
+        printf("%02x ", br_buffer[i]);
+    }
+    printf("\n");
+    */
+}
+
+
+
+
 void ProxyServer::handle_msg() {
     printf("handle msg start\n");
     dssm_msg dmsg;
@@ -1221,12 +1243,12 @@ void ProxyServer::handle_msg() {
             }
             case DMC_BR_START: {
                 std::cout << "start broadcast" << std::endl;
-                /*
                 printf("data_len = %d\n", dmsg.data_len);
                 for (int i = 0; i < dmsg.data_len; ++i) {
                     if (i % 16 == 0) printf("\n");
                     printf("%02x ", dmsg.data[i]);
                 }
+                /*
                 printf("\n");
                 printf("end\n");
                 param *p = (param *)dmsg.data;
@@ -1234,11 +1256,12 @@ void ProxyServer::handle_msg() {
                 printf("dval = %f\n", p->dval);
                 printf("cval = %s\n", p->cval);
 
+                */
+                update_brdata((uint8_t*)dmsg.data, dmsg.data_len);
+
                 dmsg.msg_type = dmsg.res_type;
                 dmsg.cmd_type = DMSG_RES;
                 dmsg.res_type = 0xffff;
-                */
-
 
                 if (msgsnd(msq_id, &dmsg, DMSG_SIZE, 0) < 0) {
                     perror("msgsnd");

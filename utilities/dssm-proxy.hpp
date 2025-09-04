@@ -11,6 +11,8 @@
 
 #include <vector>
 #include <ifaddrs.h>
+#include <mutex>
+
 
 #define BUFFER_SIZE 1024	   /* バッファバイト数 */
 
@@ -158,6 +160,12 @@ private:
 	std::pair<std::string , std::string> recv_br_msg(BROADCAST_RECVINFO *binfo);
 	std::pair<std::string , std::string> parse_data(char* buf, int msg_len);
 	void receive_notification();
+
+    std::mutex mtx;
+    uint16_t brdata_len;
+    uint8_t br_buffer[DMSG_MAX_SIZE];
+    void update_brdata(uint8_t* data, uint16_t len);
+
 	
     /* for msg_queue */
     int msq_id;

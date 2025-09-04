@@ -90,6 +90,7 @@ int main(int aArgc, char **aArgv) {
     con.send_msg(DMC_BR_START, &msg);
     con.receive_msg(&msg);
     printf("receive msg = %ld\n", msg.res_type);
+    exit(1);
 
 
 	// 共有メモリにSSMで領域を確保
