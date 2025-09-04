@@ -12,6 +12,7 @@
 #define PRQ_KEY 0x3293
 
 #define DMSG_CMD      1000
+#define DMSG_RES      1001
 #define DMSG_MAX_SIZE 2048
 
 /* proxy-clientで使うコマンド群 */
@@ -64,6 +65,12 @@ typedef struct {
     uint8_t name[DMSG_MAX_SIZE];
 } dssm_msg;  
 
+
+enum {
+    DMC_NULL = 0,
+    DMC_BR_START,
+    DMC_BR_STOP,
+};
 #define DMSG_SIZE (sizeof(dssm_msg) - sizeof(long))
 
 

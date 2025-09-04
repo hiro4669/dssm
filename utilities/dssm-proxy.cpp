@@ -1206,6 +1206,31 @@ void ProxyServer::handle_msg() {
             break;
         }
         printf("receive msg %d\n", dmsg.cmd_type);
+        switch (dmsg.cmd_type) {
+            case DMC_NULL: { // do nothing
+                break;
+            }
+            case DMC_BR_START: {
+                std::cout << "start broadcast" << std::endl;
+                dmsg.msg_type = dmsg.res_type;
+                dmsg.cmd_type = DMSG_RES;
+                dmsg.res_type = 0xffff;
+
+
+                if (msgsnd(msq_id, &dmsg, DMSG_SIZE, 0) < 0) {
+                    perror("msgsnd");
+                }
+                break;
+            }
+            case DMC_BR_STOP: {
+
+                break;
+            }
+            default: {
+                printf("unknown msg %d\n", dmsg.cmd_type);
+                break;
+            }
+        }
     }   
 
     printf("end of handle msg\n");

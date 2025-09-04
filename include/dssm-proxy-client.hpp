@@ -112,6 +112,10 @@ public:
 	bool TCPconnectToDataServer(const char *serverName, int port);
 	bool UDPconnectToDataServer(const char *serverName, int port);
 
+    // for msg_queue
+    bool send_msg(int cmd_type, dssm_msg *msg);
+    bool receive_msg(dssm_msg *msg);
+
 	bool isOpen();
 	void *getData();
 

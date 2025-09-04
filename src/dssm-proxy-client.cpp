@@ -391,6 +391,50 @@ bool PConnector::open_msgque() {
     return true;
 }
 
+bool PConnector::send_msg(int cmd_type, dssm_msg *msg) {
+    dssm_msg msgbuf;
+
+    if (msq_id < 0) {
+        fprintf(stderr, "msg queue not opened\n");
+        return false;
+    }
+
+    if (msg == NULL) {
+        msg = &msgbuf;
+    }
+    msg->msg_type = DMSG_CMD;
+    msg->res_type = my_pid;
+    msg->cmd_type = cmd_type;
+
+    if (msgsnd(msq_id, (void*)msg, (size_t)DMSG_SIZE, 0) < 0) {
+        perror("msgsnd");
+        return false;
+    }
+
+    return true;
+}
+
+bool PConnector::receive_msg(dssm_msg *msg) {
+#ifdef __APPLE__
+    volatile ssize_t len;
+#else
+    ssize_t len;
+#endif
+
+    if (msq_id < 0) {
+        fprintf(stderr, "msg queue not opened\n");
+        return false;
+    }
+
+    len = msgrcv(msq_id, msg, DMSG_SIZE, my_pid, 0);
+
+    if (len <= 0) {
+        fprintf(stderr, "msg cannot be received correctly\n");
+        return false;
+    }
+    return true;
+}
+
 bool PConnector::initRemote() {
 	bool r = true;
 	ssm_msg msg;

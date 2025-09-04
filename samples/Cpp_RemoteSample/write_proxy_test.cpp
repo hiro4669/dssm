@@ -53,7 +53,13 @@ int main(int aArgc, char **aArgv) {
 	*/
 
 	con.initRemote();
-	
+
+    con.send_msg(DMC_BR_START, NULL);
+    dssm_msg msg;
+    con.receive_msg(&msg);
+
+    printf("receive msg = %ld\n", msg.res_type);
+
 
 	// 共有メモリにSSMで領域を確保
 	// create 失敗するとfalseを返す
