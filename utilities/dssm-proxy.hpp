@@ -8,6 +8,7 @@
 #include "dssm-def.hpp"
 #include <sys/ipc.h>
 #include <sys/msg.h>
+#include <tuple>
 
 #include <vector>
 #include <ifaddrs.h>
@@ -157,12 +158,13 @@ private:
 	/* for broadcast receiving */
 	int set_rbr_info(BROADCAST_RECVINFO *binfo);
 	void rbr_close(BROADCAST_RECVINFO *binfo);
-	std::pair<std::string , std::string> recv_br_msg(BROADCAST_RECVINFO *binfo);
-	std::pair<std::string , std::string> parse_data(char* buf, int msg_len);
+	std::tuple<std::string , std::string, uint8_t*> recv_br_msg(BROADCAST_RECVINFO *binfo);
+	std::tuple<std::string , std::string, uint16_t> parse_data(char* buf, int msg_len);
 	void receive_notification();
 
     std::mutex mtx;
     uint16_t brdata_len;
+    bool should_update;
     uint8_t br_buffer[DMSG_MAX_SIZE];
     void update_brdata(uint8_t* data, uint16_t len);
 

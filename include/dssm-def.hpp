@@ -2,12 +2,14 @@
 #define _DSSM_DEF_HPP_
 
 #include <cstdint>
+#include <sys/types.h>
+#include "ssm-time.h"
 //** DSSMのための定義を追加 ******************************************* ----->
 #define SERVER_PORT 8080	   /* サーバ用PORT */
 #define SERVER_IP 0x00000000UL /* サーバ用待ち受けIP */
 
 #define BR_PORT 12345          /* ブロードキャスト待受ポート */
-#define MAXRECVSTRING 256      /* ブロードキャストメッセージの最大長 */
+#define BR_MAX_SIZE 256      /* ブロードキャストメッセージの最大長 */
 
 #define PRQ_KEY 0x3293
 

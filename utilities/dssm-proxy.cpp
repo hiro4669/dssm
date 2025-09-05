@@ -9,6 +9,7 @@
 #include <utility>
 #include <iostream>
 #include <vector>
+#include <tuple>
 
 #include <sys/socket.h>
 #include <sys/types.h>
@@ -521,6 +522,7 @@ ProxyServer::ProxyServer()
     is_check_msgque = 1;
     brdata_len = 0;
     memset(br_buffer, 0, DMSG_MAX_SIZE);
+    should_update = false;
 }
 
 ProxyServer::~ProxyServer()
@@ -1048,16 +1050,16 @@ void ProxyServer::rbr_close(BROADCAST_RECVINFO *binfo) {
 	if (binfo->sd != 0) close(binfo->sd);
 }
 
-std::pair<std::string , std::string> ProxyServer::parse_data(char* buf, int msg_len) {
+std::tuple<std::string , std::string, uint16_t> ProxyServer::parse_data(char* buf, int msg_len) {
 	if (msg_len < 0) {
         fprintf(stderr, "something happend in parse\n");
-        return {"", ""};
+        return {"", "",0};
     }
     int idx = 0;
     uint16_t len = (uint16_t)(buf[idx] << 8 | buf[idx + 1]);
     if (len != msg_len) {
         fprintf(stderr, "something happend in parse\n");
-        return {"", ""};
+        return {"", "", 0};
     }
 
     idx += 2;
@@ -1066,14 +1068,22 @@ std::pair<std::string , std::string> ProxyServer::parse_data(char* buf, int msg_
     idx += ip_len;
     uint8_t port_len = buf[idx++];    
     std::string port_str(&buf[idx], 0, port_len);
-    return {ip_addr_str, port_str};
+
+    idx += port_len;
+    return {ip_addr_str, port_str, (uint16_t)idx};
+    //return {ip_addr_str, port_str};
 }
 
-std::pair<std::string, std::string> ProxyServer::recv_br_msg(BROADCAST_RECVINFO *binfo) {
-	char recv_msg[MAXRECVSTRING];
-	int msg_len = recvfrom(binfo->sd, recv_msg, MAXRECVSTRING, 0, NULL, 0);
-    std::pair<std::string, std::string> hinfo = parse_data(recv_msg, msg_len);
-	return hinfo;
+std::tuple<std::string, std::string, uint8_t*> ProxyServer::recv_br_msg(BROADCAST_RECVINFO *binfo) {
+	char recv_msg[BR_MAX_SIZE];
+    memset(recv_msg, 0, BR_MAX_SIZE);
+	int msg_len = recvfrom(binfo->sd, recv_msg, BR_MAX_SIZE, 0, NULL, 0);
+    //std::pair<std::string, std::string> hinfo = parse_data(recv_msg, msg_len);
+    std::tuple<std::string, std::string, uint16_t> info =  parse_data(recv_msg, msg_len);
+
+    uint8_t* recv_data = (uint8_t*)malloc(msg_len - std::get<2>(info));
+    memcpy(recv_data, &recv_msg[std::get<2>(info)], msg_len - std::get<2>(info));
+	return {std::get<0>(info), std::get<1>(info), recv_data};
 }
 
 void ProxyServer::receive_notification() {
@@ -1084,16 +1094,28 @@ void ProxyServer::receive_notification() {
 	this->set_rbr_info(&binfo);
 
 	while (true) {
-		std::pair<std::string, std::string> hinfo = this->recv_br_msg(&binfo);
+		std::tuple<std::string, std::string, uint8_t*> hinfo = this->recv_br_msg(&binfo);
+        std::string ip_addr_str = std::get<0>(hinfo);
+        std::string port_str = std::get<1>(hinfo);
+
+        if (!ip_addr_str.empty() || port_str.empty()) {
+
+            uint16_t port = (uint16_t)std::stoi(port_str);
+            uint8_t* data = std::get<2>(hinfo);
+            free(data);
+
+            std::cout << "received: " << ip_addr_str << std::endl;
+            std::cout << "received:" << port_str << std::endl;
+        }
+		//std::pair<std::string, std::string> hinfo = this->recv_br_msg(&binfo);
+
+        /*
 		if (!hinfo.first.empty()) {
-			// TODO: connect to ssm_coordinator 
 			std::cout << hinfo.first << std::endl;
         	std::cout << hinfo.second << std::endl;		
 			this->stream.addInfo(hinfo.first.c_str(), hinfo.first.length(), (uint16_t)stoi(hinfo.second));
-			//this->stream.addInfo(data, 16, 8080);
-
-
 		}
+        */
 	}
 }
 
@@ -1147,6 +1169,9 @@ uint16_t ProxyServer::create_msg(char* buffer, std::string ipaddr_str, int port)
     len += port_str.length();
     len += 4;
 
+    printf("brdata_len = %d\n", brdata_len);
+    len += brdata_len;
+
     std::cout << "create_msg " << len << std::endl;
     int idx = 0;
     buffer[idx++] = (len >> 8) & 0xff;
@@ -1156,6 +1181,10 @@ uint16_t ProxyServer::create_msg(char* buffer, std::string ipaddr_str, int port)
     idx += ipaddr_str.length();
     buffer[idx++] = port_str.length();    
     memcpy(&buffer[idx], port_str.c_str(), port_str.length());    
+
+    idx += port_str.length();
+    memcpy(&buffer[idx], br_buffer, brdata_len);
+
     for (int i = 0; i < len; ++i) { // for debug
         printf("%02x ", buffer[i]);
     }
@@ -1175,10 +1204,10 @@ void ProxyServer::send_notification() {
     }
 	//std::cout << ainfo.first << std::endl;
 	//std::cout << ainfo.second << std::endl;
-	char buffer[256];
+	char buffer[BR_MAX_SIZE];
     //uint16_t _msg_len = create_msg(buffer, ainfo.first, SERVER_PORT); // specify self ip
-    create_msg(buffer, ainfo.first, SERVER_PORT); // specify self ip
-    uint16_t total_len = (uint16_t)(buffer[0] << 8 | buffer[1]);    
+    //create_msg(buffer, ainfo.first, SERVER_PORT); // specify self ip
+    //uint16_t total_len = (uint16_t)(buffer[0] << 8 | buffer[1]);    
 
 	BROADCAST_SENDINFO binfo;
 	this->sbr_init(&binfo, ainfo.second.c_str(), BR_PORT);
@@ -1187,6 +1216,8 @@ void ProxyServer::send_notification() {
 
 	while (true) {
 		//std::cout << "send..." << std::endl;
+        create_msg(buffer, ainfo.first, SERVER_PORT); // specify self ip
+        uint16_t total_len = (uint16_t)(buffer[0] << 8 | buffer[1]);    
 		this->send_br_msg(&binfo, buffer, total_len);
 		sleep(5);
 	}
@@ -1201,6 +1232,7 @@ void ProxyServer::update_brdata(uint8_t* data, uint16_t len) {
     std::cout << "update brdata " << len << std::endl;
     std::lock_guard<std::mutex> lock(mtx);
     memcpy(br_buffer, data, len);
+    should_update = true;
     brdata_len = len;
     // test
     /*
