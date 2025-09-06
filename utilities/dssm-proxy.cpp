@@ -1074,7 +1074,7 @@ std::tuple<std::string , std::string, uint16_t> ProxyServer::parse_data(char* bu
     //return {ip_addr_str, port_str};
 }
 
-std::tuple<std::string, std::string, uint8_t*> ProxyServer::recv_br_msg(BROADCAST_RECVINFO *binfo) {
+std::tuple<std::string, std::string, uint8_t*, uint16_t> ProxyServer::recv_br_msg(BROADCAST_RECVINFO *binfo) {
 	char recv_msg[BR_MAX_SIZE];
     memset(recv_msg, 0, BR_MAX_SIZE);
 	int msg_len = recvfrom(binfo->sd, recv_msg, BR_MAX_SIZE, 0, NULL, 0);
@@ -1082,8 +1082,9 @@ std::tuple<std::string, std::string, uint8_t*> ProxyServer::recv_br_msg(BROADCAS
     std::tuple<std::string, std::string, uint16_t> info =  parse_data(recv_msg, msg_len);
 
     uint8_t* recv_data = (uint8_t*)malloc(msg_len - std::get<2>(info));
+    uint16_t data_len = msg_len - std::get<2>(info);
     memcpy(recv_data, &recv_msg[std::get<2>(info)], msg_len - std::get<2>(info));
-	return {std::get<0>(info), std::get<1>(info), recv_data};
+	return {std::get<0>(info), std::get<1>(info), recv_data, data_len};
 }
 
 void ProxyServer::receive_notification() {
@@ -1094,7 +1095,7 @@ void ProxyServer::receive_notification() {
 	this->set_rbr_info(&binfo);
 
 	while (true) {
-		std::tuple<std::string, std::string, uint8_t*> hinfo = this->recv_br_msg(&binfo);
+		std::tuple<std::string, std::string, uint8_t*, uint16_t> hinfo = this->recv_br_msg(&binfo);
         std::string ip_addr_str = std::get<0>(hinfo);
         std::string port_str = std::get<1>(hinfo);
 
@@ -1102,12 +1103,28 @@ void ProxyServer::receive_notification() {
 
             uint16_t port = (uint16_t)std::stoi(port_str);
             uint8_t* data = std::get<2>(hinfo);
-            free(data);
+            uint16_t data_len = std::get<3>(hinfo);
 
             std::cout << "received: " << ip_addr_str << std::endl;
             std::cout << "received:" << port_str << std::endl;
+
+            Neighbor nbr = (data_len > 0) ? 
+                Neighbor(ip_addr_str, port, data_len, data) : 
+                Neighbor(ip_addr_str, port);
+            
+            std::cout << "add or update" << std::endl;
+            neighbor_manager.add(nbr);
+            /*
+            if (neighbor_manager.find(nbr)) {
+                std::cout << "already exist: " << ip_addr_str << std::endl;
+            } else {
+                std::cout << "add neighbor: " << ip_addr_str << std::endl;
+                neighbor_manager.add(nbr);
+            }
+            */
+
+            free(data);
         }
-		//std::pair<std::string, std::string> hinfo = this->recv_br_msg(&binfo);
 
         /*
 		if (!hinfo.first.empty()) {

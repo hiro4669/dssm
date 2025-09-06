@@ -49,18 +49,18 @@ int main(int aArgc, char **aArgv) {
 	 * data型とproperty型は ./intSsm.h に定義
 	 * 指定しているIPはループバックアドレス(自分自身)
 	 */
-	//DSSMApi<intSsm_k, doubleProperty_p> con(SNAME_INT, 1);
-	DSSMApi<intSsm_k, props_p> con(SNAME_INT, 1);
+	//DSSMApi<intSsm_k, props_p> con(SNAME_INT, 1);
+	DSSMApi<intSsm_k, props_p, param> con(SNAME_INT, 1);
 
-
-    param p;
-    p.ival = 123;
-    p.dval = 456.789;
-    strncpy(p.cval, "Hello DSSM", 32);
+    // set broadcast data
+    con.br_data.ival = 123;
+    con.br_data.dval = 456.789;
+    strncpy(con.br_data.cval, "Hello DSSM", 32);
     void* data = malloc(sizeof(param));
     memset(data, 0, sizeof(param));
-    memcpy(data, (char*)&p, sizeof(param));
+    memcpy(data, (char*)con.pbr_data, sizeof(param));
 
+    // TODO implement useful API for broadcast
     /*
     for (int i = 0; i < sizeof(param); ++i) {
         if (i  % 16 == 0) printf("\n");
@@ -69,6 +69,7 @@ int main(int aArgc, char **aArgv) {
     printf("\n");
     */
 
+    // send broadcast start message to proxy server
     dssm_msg msg;
     memset(msg.data, 0, DMSG_MAX_SIZE);
     msg.data_len = sizeof(param);

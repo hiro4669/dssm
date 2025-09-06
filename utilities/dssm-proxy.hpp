@@ -9,6 +9,7 @@
 #include <sys/ipc.h>
 #include <sys/msg.h>
 #include <tuple>
+#include "neighbor.hpp"
 
 #include <vector>
 #include <ifaddrs.h>
@@ -158,7 +159,7 @@ private:
 	/* for broadcast receiving */
 	int set_rbr_info(BROADCAST_RECVINFO *binfo);
 	void rbr_close(BROADCAST_RECVINFO *binfo);
-	std::tuple<std::string , std::string, uint8_t*> recv_br_msg(BROADCAST_RECVINFO *binfo);
+	std::tuple<std::string , std::string, uint8_t*, uint16_t> recv_br_msg(BROADCAST_RECVINFO *binfo);
 	std::tuple<std::string , std::string, uint16_t> parse_data(char* buf, int msg_len);
 	void receive_notification();
 
@@ -175,7 +176,7 @@ private:
     bool open_msgque();
     void handle_msg();
 
-	
+    NeighborManager neighbor_manager;
 
 
 public:

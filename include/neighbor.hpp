@@ -3,9 +3,12 @@
 
 #include <stdio.h>
 #include <string>
+#include <cstring>
 #include <map>
 #include <arpa/inet.h>
 #include <netinet/in.h>
+
+#include "dssm-def.hpp"
 
 
 #define IPINFO_SIZE 21
@@ -18,13 +21,19 @@ class Neighbor {
     std::string ip_addr;
     struct timespec ltime;
     int port;
+    uint16_t br_data_len;
+    uint8_t br_data[BR_MAX_SIZE];
 
     public:
     Neighbor(){}
-    Neighbor(std::string ip_addr, int port) {
+    Neighbor(std::string ip_addr, int port, int br_data_len = 0, uint8_t* br_data = nullptr) {
         this->ip_addr = ip_addr;
         this->port = port;
         this->updateTime();
+        if (br_data_len > 0 && br_data != nullptr) {
+            this->br_data_len = br_data_len;
+            std::memcpy(this->br_data, br_data, br_data_len);
+        } 
     }
     ~Neighbor(){}
 

@@ -15,7 +15,8 @@
 #include <thread>
 #include <functional>
 
-template <typename T, typename P = DSSMDummy>
+//template <typename T, typename P = DSSMDummy>
+template <typename T, typename P = DSSMDummy, typename U = DSSMDummy>
 class DSSMApi : public PConnector
 {
 private:
@@ -29,6 +30,7 @@ private:
 	{
 		fulldata = malloc(sizeof(T) + sizeof(ssmTimeT)); // メモリの開放はどうする？ -> とりあえずデストラクタで対応
 		wdata = (T *)&(((char *)fulldata)[8]);
+        pbr_data = &br_data;
 		PConnector::setBuffer(&data, sizeof(T), &property, sizeof(P), fulldata);
 		PConnector::setIpAddress(ipAddr);
 	}
@@ -37,18 +39,19 @@ private:
 	{
 		fulldata = malloc(sizeof(T) + sizeof(ssmTimeT)); // メモリの開放はどうする？ -> とりあえずデストラクタで対応
 		wdata = (T *)&(((char *)fulldata)[8]);
+        pbr_data = &br_data;
 		PConnector::setBuffer(&data, sizeof(T), &property, sizeof(P), fulldata);
 	}
 
-//protected:
-//	void setBuffer(void *data, uint64_t dataSize, void *property, uint64_t propertySize, void *fulldata);
 
 public:
 	T data;
 	T *wdata;
 	P property;
 	void *fulldata;
-	//bool flg;
+
+    U br_data;
+    U *pbr_data;
 
 	DSSMApi() {
 		initApi();
@@ -302,5 +305,8 @@ exit:;
 		return ringBuf.getTID_top();
 	}
 };
+
+template <typename S, typename V>
+using DSSMApiWithProp = DSSMApi<S, DSSMDummy, V>;
 
 #endif
