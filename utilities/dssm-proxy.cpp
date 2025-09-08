@@ -1071,14 +1071,12 @@ std::tuple<std::string , std::string, uint16_t> ProxyServer::parse_data(char* bu
 
     idx += port_len;
     return {ip_addr_str, port_str, (uint16_t)idx};
-    //return {ip_addr_str, port_str};
 }
 
 std::tuple<std::string, std::string, uint8_t*, uint16_t> ProxyServer::recv_br_msg(BROADCAST_RECVINFO *binfo) {
 	char recv_msg[BR_MAX_SIZE];
     memset(recv_msg, 0, BR_MAX_SIZE);
 	int msg_len = recvfrom(binfo->sd, recv_msg, BR_MAX_SIZE, 0, NULL, 0);
-    //std::pair<std::string, std::string> hinfo = parse_data(recv_msg, msg_len);
     std::tuple<std::string, std::string, uint16_t> info =  parse_data(recv_msg, msg_len);
 
     uint8_t* recv_data = (uint8_t*)malloc(msg_len - std::get<2>(info));
@@ -1105,34 +1103,14 @@ void ProxyServer::receive_notification() {
             uint8_t* data = std::get<2>(hinfo);
             uint16_t data_len = std::get<3>(hinfo);
 
-            std::cout << "received: " << ip_addr_str << std::endl;
-            std::cout << "received:" << port_str << std::endl;
-
             Neighbor nbr = (data_len > 0) ? 
                 Neighbor(ip_addr_str, port, data_len, data) : 
                 Neighbor(ip_addr_str, port);
             
-            std::cout << "add or update" << std::endl;
             neighbor_manager.add(nbr);
-            /*
-            if (neighbor_manager.find(nbr)) {
-                std::cout << "already exist: " << ip_addr_str << std::endl;
-            } else {
-                std::cout << "add neighbor: " << ip_addr_str << std::endl;
-                neighbor_manager.add(nbr);
-            }
-            */
 
             free(data);
         }
-
-        /*
-		if (!hinfo.first.empty()) {
-			std::cout << hinfo.first << std::endl;
-        	std::cout << hinfo.second << std::endl;		
-			this->stream.addInfo(hinfo.first.c_str(), hinfo.first.length(), (uint16_t)stoi(hinfo.second));
-		}
-        */
 	}
 }
 
@@ -1186,10 +1164,8 @@ uint16_t ProxyServer::create_msg(char* buffer, std::string ipaddr_str, int port)
     len += port_str.length();
     len += 4;
 
-    printf("brdata_len = %d\n", brdata_len);
     len += brdata_len;
 
-    std::cout << "create_msg " << len << std::endl;
     int idx = 0;
     buffer[idx++] = (len >> 8) & 0xff;
     buffer[idx++] = (len >> 0) & 0xff;
@@ -1201,11 +1177,6 @@ uint16_t ProxyServer::create_msg(char* buffer, std::string ipaddr_str, int port)
 
     idx += port_str.length();
     memcpy(&buffer[idx], br_buffer, brdata_len);
-
-    for (int i = 0; i < len; ++i) { // for debug
-        printf("%02x ", buffer[i]);
-    }
-    printf("\n");
 
 	return len;
 }
@@ -1251,33 +1222,15 @@ void ProxyServer::update_brdata(uint8_t* data, uint16_t len) {
     memcpy(br_buffer, data, len);
     should_update = true;
     brdata_len = len;
-    // test
-    /*
-    for (int i = 0; i < brdata_len; ++i) {
-        if (i % 16 == 0) printf("\n");
-        printf("%02x ", br_buffer[i]);
-    }
-    printf("\n");
-    */
 }
 
 
 
 
 void ProxyServer::handle_msg() {
-    printf("handle msg start\n");
     dssm_msg dmsg;
     int len;
     
-    // for test
-    /*
-    typedef struct {
-        int ival;
-        double dval;
-        char cval[32];
-    } param;
-    */
-
     while (true) {
         len = msgrcv(msq_id, &dmsg, DMSG_SIZE, DMSG_CMD, 0);
         if (len < 0) {
@@ -1285,32 +1238,35 @@ void ProxyServer::handle_msg() {
             perror("msgrcv");
             break;
         }
-        printf("receive msg %d\n", dmsg.cmd_type);
         switch (dmsg.cmd_type) {
             case DMC_NULL: { // do nothing
                 break;
             }
             case DMC_BR_START: {
-                std::cout << "start broadcast" << std::endl;
-                printf("data_len = %d\n", dmsg.data_len);
-                for (int i = 0; i < dmsg.data_len; ++i) {
-                    if (i % 16 == 0) printf("\n");
-                    printf("%02x ", dmsg.data[i]);
-                }
-                /*
-                printf("\n");
-                printf("end\n");
-                param *p = (param *)dmsg.data;
-                printf("ival = %d\n", p->ival);
-                printf("dval = %f\n", p->dval);
-                printf("cval = %s\n", p->cval);
-
-                */
                 update_brdata((uint8_t*)dmsg.data, dmsg.data_len);
-
                 dmsg.msg_type = dmsg.res_type;
                 dmsg.cmd_type = DMSG_RES;
-                dmsg.res_type = 0xffff;
+                dmsg.res_type = 0xffff; // dummy
+
+                if (msgsnd(msq_id, &dmsg, DMSG_SIZE, 0) < 0) {
+                    perror("msgsnd");
+                }
+                break;
+            }
+            case DMC_BR_RECEIVE: {
+                //std::cout << "receive broadcast" << std::endl;
+                dmsg.msg_type = dmsg.res_type;
+                dmsg.cmd_type = DMSG_RES;
+                dmsg.res_type = 0xffff; // dummy
+                int count = neighbor_manager.count();
+
+                if (count > 0) {
+                    Neighbor neighbor = neighbor_manager.getFirst();
+                    std::vector<uint8_t> vec = neighbor.serialize();
+                    uint8_t* data = vec.data();
+                    dmsg.data_len = (uint16_t)vec.size();
+                    memcpy(dmsg.data, data, dmsg.data_len);
+                }
 
                 if (msgsnd(msq_id, &dmsg, DMSG_SIZE, 0) < 0) {
                     perror("msgsnd");

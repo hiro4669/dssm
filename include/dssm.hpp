@@ -14,6 +14,9 @@
 #include <iostream>
 #include <thread>
 #include <functional>
+#include <cstring>
+
+#include "dssm-def.hpp"
 
 //template <typename T, typename P = DSSMDummy>
 template <typename T, typename P = DSSMDummy, typename U = DSSMDummy>
@@ -67,6 +70,47 @@ public:
 		free(fulldata);
 //		free(wdata);
 	}
+
+    bool sendBroadcast() {
+        dssm_msg msg;
+        memset(msg.data, 0, DMSG_MAX_SIZE);
+        msg.data_len = sizeof(U);
+        memcpy(msg.data, (char*)pbr_data, sizeof(U));
+        send_msg(DMC_BR_START, &msg);
+        receive_msg(&msg);
+        printf("receive msg = %ld\n", msg.res_type);
+        return true;
+    }
+
+    bool receiveBroadcast() {
+        dssm_msg msg;
+        send_msg(DMC_BR_RECEIVE, NULL);
+        receive_msg(&msg);
+
+        int idx = 0;
+        uint16_t ipaddr_len = (uint16_t)(msg.data[idx+1] << 8 | msg.data[idx]);
+        idx += 2;
+//        printf("ipaddr_len = %d\n", ipaddr_len);
+        std::string ipaddr_str = std::string((char*)&msg.data[idx], ipaddr_len);
+        std::cout << "ipaddr_str = " << ipaddr_str << std::endl;
+        idx += ipaddr_len;
+        uint16_t port_len = (uint16_t)(msg.data[idx+1] << 8 | msg.data[idx]);
+        idx += 2;
+ //       printf("port_len = %d\n", port_len);
+        std::string port_str = std::string((char*)&msg.data[idx], port_len);
+        idx += port_len;
+        std::cout << "port_str = " << port_str << std::endl;
+        uint16_t data_len = (uint16_t)(msg.data[idx+1] << 8 | msg.data[idx]);
+        idx += 2;
+//        printf("data_len = %d\n", data_len);
+        if (data_len > 0) {
+            memcpy(pbr_data, &msg.data[idx], data_len);
+        }
+        
+
+
+        return true;
+    }
 
 	// Hiroaki Fukuda
 	void bulkReadThreadMain() {

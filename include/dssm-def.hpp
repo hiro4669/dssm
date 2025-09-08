@@ -72,6 +72,7 @@ typedef struct {
 enum {
     DMC_NULL = 0,
     DMC_BR_START,
+    DMC_BR_RECEIVE,
     DMC_BR_STOP,
 };
 #define DMSG_SIZE (sizeof(dssm_msg) - sizeof(long))

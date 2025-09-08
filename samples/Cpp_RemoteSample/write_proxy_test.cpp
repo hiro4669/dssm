@@ -60,38 +60,10 @@ int main(int aArgc, char **aArgv) {
     memset(data, 0, sizeof(param));
     memcpy(data, (char*)con.pbr_data, sizeof(param));
 
-    // TODO implement useful API for broadcast
-    /*
-    for (int i = 0; i < sizeof(param); ++i) {
-        if (i  % 16 == 0) printf("\n");
-        printf("%02x ", ((unsigned char*)data)[i]);
-    }
-    printf("\n");
-    */
-
-    // send broadcast start message to proxy server
-    dssm_msg msg;
-    memset(msg.data, 0, DMSG_MAX_SIZE);
-    msg.data_len = sizeof(param);
-    printf("data_len = %d\n", msg.data_len);
-    memcpy(msg.data, (char*)data, sizeof(param));
-    free(data);
-
-    /*
-    for (int i = 0; i < sizeof(dssm_msg); ++i) {
-        if (i  % 16 == 0) printf("\n");
-        printf("%02x ", ((unsigned char*)&msg)[i]);
-    }
-    exit(1);
-    */
-
-
 	con.initRemote();
 
-    con.send_msg(DMC_BR_START, &msg);
-    con.receive_msg(&msg);
-    printf("receive msg = %ld\n", msg.res_type);
-
+    // send broadcast to proxy server
+    con.sendBroadcast();
 
 	// 共有メモリにSSMで領域を確保
 	// create 失敗するとfalseを返す

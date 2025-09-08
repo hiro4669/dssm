@@ -7,6 +7,7 @@
 #include <map>
 #include <arpa/inet.h>
 #include <netinet/in.h>
+#include <vector>
 
 #include "dssm-def.hpp"
 
@@ -25,7 +26,12 @@ class Neighbor {
     uint8_t br_data[BR_MAX_SIZE];
 
     public:
-    Neighbor(){}
+    Neighbor(){
+        this->ip_addr = "127.0.0.1";
+        this->port = 0;
+        this->br_data_len = 0;
+        std::memset(this->br_data, 0, BR_MAX_SIZE);
+    }
     Neighbor(std::string ip_addr, int port, int br_data_len = 0, uint8_t* br_data = nullptr) {
         this->ip_addr = ip_addr;
         this->port = port;
@@ -41,6 +47,7 @@ class Neighbor {
     int getPort();
     void showInfo();
     void updateTime();
+    std::vector<uint8_t> serialize();
 };
 
 
@@ -51,10 +58,12 @@ class NeighborManager {
     public:
     NeighborManager() {
         // for test
+        /*
         Neighbor nb1("10.0.0.1", 8080);
         Neighbor nb2("192.168.0.1", 12000);
         this->nmap[nb1.getIpAddress()] = nb1;
         this->nmap[nb2.getIpAddress()] = nb2;
+        */
         // end for test
 
     }
@@ -63,8 +72,8 @@ class NeighborManager {
     bool find(Neighbor nb);
     size_t count();
     bool serialize(char* buffer);
+    Neighbor getFirst();
 };
-
 
 /***   For Neighbor class    ***/
 inline void Neighbor::updateTime() {
@@ -84,11 +93,54 @@ inline int Neighbor::getPort() {
     return this->port;
 }
 
+inline std::vector<uint8_t> Neighbor::serialize() {
+    std::vector<uint8_t> buffer;
+    std::string ip_addr_str = this->getIpAddress();
+    std::string port_str = std::to_string(this->getPort());
+
+    uint16_t ip_len = (uint16_t)ip_addr_str.length();
+    uint16_t port_len = (uint16_t)port_str.length();
+
+    buffer.insert(buffer.end(), reinterpret_cast<uint8_t*>(&ip_len), 
+            reinterpret_cast<uint8_t*>(&ip_len) + sizeof(uint16_t));
+    buffer.insert(buffer.end(), ip_addr_str.begin(), ip_addr_str.end());
+
+    buffer.insert(buffer.end(), reinterpret_cast<uint8_t*>(&port_len), 
+            reinterpret_cast<uint8_t*>(&port_len) + sizeof(uint16_t));
+    buffer.insert(buffer.end(), port_str.begin(), port_str.end());
+
+    buffer.insert(buffer.end(), reinterpret_cast<uint8_t*>(&br_data_len), 
+            reinterpret_cast<uint8_t*>(&br_data_len) + sizeof(uint16_t));
+    if (br_data_len > 0) {
+        buffer.insert(buffer.end(), this->br_data, this->br_data + br_data_len);
+    }
+
+    /*
+    printf("total len = %ld\n", buffer.size());
+    printf("--------data begin\n");
+    uint8_t* data = buffer.data();
+    for (int i = 0; i < buffer.size(); ++i) {
+        if (i % 16 == 0) printf("\n");
+        printf("%02x ", data[i]);
+    }
+    printf("\n -------data end\n");
+    */
+    return buffer;
+}
+
 /***  NeighborManager ***/
 inline void NeighborManager::add(Neighbor nb) {    
     this->nmap[nb.getIpAddress()] = nb;
 }
 
+
+inline Neighbor NeighborManager::getFirst() {
+    if (this->nmap.size() > 0) {
+        return this->nmap.begin()->second;
+    } else {
+        return Neighbor();
+    }
+}
 
 inline size_t NeighborManager::count() {
     //return this->nblist.size();
@@ -104,6 +156,8 @@ inline bool NeighborManager::find(Neighbor nb) {
     } 
     return false;
 }
+
+
 
 inline bool NeighborManager::serialize(char* buffer) {
     //std::cout << "serialize" << std::endl;
