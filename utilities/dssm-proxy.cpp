@@ -9,6 +9,7 @@
 #include <utility>
 #include <iostream>
 #include <vector>
+#include <tuple>
 
 #include <sys/socket.h>
 #include <sys/types.h>
@@ -28,6 +29,7 @@
 #include "dssm-proxy.hpp"
 #include "dssm-utility.hpp"
 
+#include "broadcast.hpp"
 
 
 #define DEBUG 0
@@ -37,9 +39,7 @@ extern pid_t my_pid; // for debug
 socklen_t address_len = sizeof(struct sockaddr_in);
 
 DataCommunicator::DataCommunicator(uint16_t nport, char *mData, uint64_t d_size,
-								   uint64_t h_size, SSMApiBase *pstream, PROXY_open_mode type,
-								   ProxyServer *proxy, bool isTCP)
-{
+								   uint64_t h_size, SSMApiBase *pstream, PROXY_open_mode type, bool isTCP) {
 	this->mData = mData;
 	this->mDataSize = d_size;
 	this->ssmHeaderSize = h_size;
@@ -82,14 +82,90 @@ bool DataCommunicator::receiveData()
 	return true;
 }
 
+
+int DataCommunicator::readInt(char **p) {
+	uint8_t v1 = **p;
+	(*p)++;
+	uint8_t v2 = **p;
+	(*p)++;
+	uint8_t v3 = **p;
+	(*p)++;
+	uint8_t v4 = **p;
+	(*p)++;
+
+	int v = (int)(v1 << 24 | v2 << 16 | v3 << 8 | v4);
+	return v;
+}
+
+uint64_t DataCommunicator::readLong(char **p) {
+	uint8_t v1 = **p;
+	(*p)++;
+	uint8_t v2 = **p;
+	(*p)++;
+	uint8_t v3 = **p;
+	(*p)++;
+	uint8_t v4 = **p;
+	(*p)++;
+	uint8_t v5 = **p;
+	(*p)++;
+	uint8_t v6 = **p;
+	(*p)++;
+	uint8_t v7 = **p;
+	(*p)++;
+	uint8_t v8 = **p;
+	(*p)++;
+
+	uint64_t lv = (uint64_t)((uint64_t)v1 << 56 | (uint64_t)v2 << 48 | (uint64_t)v3 << 40 | (uint64_t)v4 << 32 | (uint64_t)v5 << 24 | (uint64_t)v6 << 16 | (uint64_t)v7 << 8 | (uint64_t)v8);
+	return lv;
+}
+
+double DataCommunicator::readDouble(char **p) {
+	char buf[8];
+	for (int i = 0; i < 8; ++i, (*p)++)
+	{
+		buf[7 - i] = **p;
+	}
+	return *(double *)buf;
+}
+
+void DataCommunicator::writeInt(char **p, int v) {
+	**p = (v >> 24) & 0xff;
+	(*p)++;
+	**p = (v >> 16) & 0xff;
+	(*p)++;
+	**p = (v >> 8) & 0xff;
+	(*p)++;
+	**p = (v >> 0) & 0xff;
+	(*p)++;
+}
+void DataCommunicator::writeLong(char **p, uint64_t v) {
+	**p = (v >> 56) & 0xff;
+	(*p)++;
+	**p = (v >> 48) & 0xff;
+	(*p)++;
+	**p = (v >> 40) & 0xff;
+	(*p)++;
+	**p = (v >> 32) & 0xff;
+	(*p)++;
+	this->writeInt(p, v);
+}
+
+void DataCommunicator::writeDouble(char **p, double v) {
+	char *dp = (char *)&v;
+	for (int i = 0; i < 8; ++i, (*p)++)
+	{
+		**p = dp[7 - i] & 0xff;
+	}
+}
+
 bool DataCommunicator::deserializeTmsg(thrd_msg *tmsg)
 {
 	memset((char *)tmsg, 0, sizeof(thrd_msg));
 	char *p = this->buf;
-	tmsg->msg_type = proxy->readLong(&p);
-	tmsg->res_type = proxy->readLong(&p);
-	tmsg->tid = proxy->readInt(&p);
-	tmsg->time = proxy->readDouble(&p);
+	tmsg->msg_type = this->readLong(&p);
+	tmsg->res_type = this->readLong(&p);
+	tmsg->tid = this->readInt(&p);
+	tmsg->time = this->readDouble(&p);
 	return true;
 }
 
@@ -97,10 +173,10 @@ bool DataCommunicator::serializeTmsg(thrd_msg *tmsg)
 {
 	// memset((char*)tmsg, 0, sizeof(thrd_msg));
 	char *p = this->buf;
-	proxy->writeLong(&p, tmsg->msg_type);
-	proxy->writeLong(&p, tmsg->res_type);
-	proxy->writeInt(&p, tmsg->tid);
-	proxy->writeDouble(&p, tmsg->time);
+	this->writeLong(&p, tmsg->msg_type);
+	this->writeLong(&p, tmsg->res_type);
+	this->writeInt(&p, tmsg->tid);
+	this->writeDouble(&p, tmsg->time);
 	return true;
 }
 
@@ -442,6 +518,11 @@ ProxyServer::ProxyServer()
 	com = nullptr;
 	mType = WRITE_MODE;
 	dssmMsgLen = dssm::util::countDssmMsgLength();
+    msq_id = -1;
+    is_check_msgque = 1;
+    brdata_len = 0;
+    memset(br_buffer, 0, DMSG_MAX_SIZE);
+    should_update = false;
 }
 
 ProxyServer::~ProxyServer()
@@ -462,7 +543,30 @@ bool ProxyServer::init()
 	this->server.server_addr.sin_addr.s_addr = htonl(SERVER_IP);
 	this->server.server_addr.sin_port = htons(SERVER_PORT);
 
+    this->open_msgque(); // initialize msg_queue
+
 	return this->open();
+}
+
+bool ProxyServer::open_msgque()
+{
+    if (is_check_msgque) {
+        //msq_id = msgget(PRQ_KEY, IPC_CREAT | IPC_EXCL | 0666);
+        msq_id = msgget(PRQ_KEY, IPC_CREAT | 0666);
+    } else {
+        msq_id = msgget(PRQ_KEY, IPC_CREAT | 0666);
+    }
+
+    if (msq_id < 0) {
+        perror("msgget");
+        return false;
+    }
+	if( errno == EEXIST ) {
+		fprintf( stderr, "ERROR : message queue is already exist.\n" );
+		fprintf( stderr, "maybe dssm-proxy has started.\n" );
+	}
+
+    return true;
 }
 
 bool ProxyServer::open()
@@ -881,7 +985,7 @@ void ProxyServer::handleCommand()
 		{
 			msg.suid = nport;
 			com = new DataCommunicator(nport, mData, mDataSize, ssmHeaderSize,
-									   &stream, mType, this);
+									   &stream, mType);
 			com->start(nullptr);
 			sendMsg(MC_RES, &msg);
 			break;
@@ -890,7 +994,7 @@ void ProxyServer::handleCommand()
 		{
 			msg.suid = nport;
 			com = new DataCommunicator(nport, mData, mDataSize, ssmHeaderSize,
-									   &stream, mType, this, false);
+									   &stream, mType, false);
 			com->start(nullptr);
 			sendMsg(MC_RES, &msg);
 			break;
@@ -946,16 +1050,16 @@ void ProxyServer::rbr_close(BROADCAST_RECVINFO *binfo) {
 	if (binfo->sd != 0) close(binfo->sd);
 }
 
-std::pair<std::string , std::string> ProxyServer::parse_data(char* buf, int msg_len) {
+std::tuple<std::string , std::string, uint16_t> ProxyServer::parse_data(char* buf, int msg_len) {
 	if (msg_len < 0) {
         fprintf(stderr, "something happend in parse\n");
-        return {"", ""};
+        return {"", "",0};
     }
     int idx = 0;
     uint16_t len = (uint16_t)(buf[idx] << 8 | buf[idx + 1]);
     if (len != msg_len) {
         fprintf(stderr, "something happend in parse\n");
-        return {"", ""};
+        return {"", "", 0};
     }
 
     idx += 2;
@@ -964,14 +1068,21 @@ std::pair<std::string , std::string> ProxyServer::parse_data(char* buf, int msg_
     idx += ip_len;
     uint8_t port_len = buf[idx++];    
     std::string port_str(&buf[idx], 0, port_len);
-    return {ip_addr_str, port_str};
+
+    idx += port_len;
+    return {ip_addr_str, port_str, (uint16_t)idx};
 }
 
-std::pair<std::string, std::string> ProxyServer::recv_br_msg(BROADCAST_RECVINFO *binfo) {
-	char recv_msg[MAXRECVSTRING];
-	int msg_len = recvfrom(binfo->sd, recv_msg, MAXRECVSTRING, 0, NULL, 0);
-    std::pair<std::string, std::string> hinfo = parse_data(recv_msg, msg_len);
-	return hinfo;
+std::tuple<std::string, std::string, uint8_t*, uint16_t> ProxyServer::recv_br_msg(BROADCAST_RECVINFO *binfo) {
+	char recv_msg[BR_MAX_SIZE];
+    memset(recv_msg, 0, BR_MAX_SIZE);
+	int msg_len = recvfrom(binfo->sd, recv_msg, BR_MAX_SIZE, 0, NULL, 0);
+    std::tuple<std::string, std::string, uint16_t> info =  parse_data(recv_msg, msg_len);
+
+    uint8_t* recv_data = (uint8_t*)malloc(msg_len - std::get<2>(info));
+    uint16_t data_len = msg_len - std::get<2>(info);
+    memcpy(recv_data, &recv_msg[std::get<2>(info)], msg_len - std::get<2>(info));
+	return {std::get<0>(info), std::get<1>(info), recv_data, data_len};
 }
 
 void ProxyServer::receive_notification() {
@@ -982,16 +1093,24 @@ void ProxyServer::receive_notification() {
 	this->set_rbr_info(&binfo);
 
 	while (true) {
-		std::pair<std::string, std::string> hinfo = this->recv_br_msg(&binfo);
-		if (!hinfo.first.empty()) {
-			// TODO: connect to ssm_coordinator 
-			std::cout << hinfo.first << std::endl;
-        	std::cout << hinfo.second << std::endl;		
-			this->stream.addInfo(hinfo.first.c_str(), hinfo.first.length(), (uint16_t)stoi(hinfo.second));
-			//this->stream.addInfo(data, 16, 8080);
+		std::tuple<std::string, std::string, uint8_t*, uint16_t> hinfo = this->recv_br_msg(&binfo);
+        std::string ip_addr_str = std::get<0>(hinfo);
+        std::string port_str = std::get<1>(hinfo);
 
+        if (!ip_addr_str.empty() || port_str.empty()) {
 
-		}
+            uint16_t port = (uint16_t)std::stoi(port_str);
+            uint8_t* data = std::get<2>(hinfo);
+            uint16_t data_len = std::get<3>(hinfo);
+
+            Neighbor nbr = (data_len > 0) ? 
+                Neighbor(ip_addr_str, port, data_len, data) : 
+                Neighbor(ip_addr_str, port);
+            
+            neighbor_manager.add(nbr);
+
+            free(data);
+        }
 	}
 }
 
@@ -1045,6 +1164,8 @@ uint16_t ProxyServer::create_msg(char* buffer, std::string ipaddr_str, int port)
     len += port_str.length();
     len += 4;
 
+    len += brdata_len;
+
     int idx = 0;
     buffer[idx++] = (len >> 8) & 0xff;
     buffer[idx++] = (len >> 0) & 0xff;
@@ -1053,10 +1174,9 @@ uint16_t ProxyServer::create_msg(char* buffer, std::string ipaddr_str, int port)
     idx += ipaddr_str.length();
     buffer[idx++] = port_str.length();    
     memcpy(&buffer[idx], port_str.c_str(), port_str.length());    
-    for (int i = 0; i < len; ++i) { // for debug
-        printf("%02x ", buffer[i]);
-    }
-    printf("\n");
+
+    idx += port_str.length();
+    memcpy(&buffer[idx], br_buffer, brdata_len);
 
 	return len;
 }
@@ -1072,10 +1192,10 @@ void ProxyServer::send_notification() {
     }
 	//std::cout << ainfo.first << std::endl;
 	//std::cout << ainfo.second << std::endl;
-	char buffer[256];
+	char buffer[BR_MAX_SIZE];
     //uint16_t _msg_len = create_msg(buffer, ainfo.first, SERVER_PORT); // specify self ip
-    create_msg(buffer, ainfo.first, SERVER_PORT); // specify self ip
-    uint16_t total_len = (uint16_t)(buffer[0] << 8 | buffer[1]);    
+    //create_msg(buffer, ainfo.first, SERVER_PORT); // specify self ip
+    //uint16_t total_len = (uint16_t)(buffer[0] << 8 | buffer[1]);    
 
 	BROADCAST_SENDINFO binfo;
 	this->sbr_init(&binfo, ainfo.second.c_str(), BR_PORT);
@@ -1084,6 +1204,8 @@ void ProxyServer::send_notification() {
 
 	while (true) {
 		//std::cout << "send..." << std::endl;
+        create_msg(buffer, ainfo.first, SERVER_PORT); // specify self ip
+        uint16_t total_len = (uint16_t)(buffer[0] << 8 | buffer[1]);    
 		this->send_br_msg(&binfo, buffer, total_len);
 		sleep(5);
 	}
@@ -1093,40 +1215,78 @@ void ProxyServer::send_notification() {
 /* end of for send broadcast */
 
 
-/*
-bool ProxyServer::run(bool notify) {
-
-	if (!initSSM()) {
-		fprintf(stderr, "init ssm error in ssm-proxy run\n");
-		return false;
-	} 
-
-	char data[16];
-	memset(data, 0, 16);
-	memcpy(data, "192.168.0.1", 11);
-
-	//for (int i = 0; i < 16; ++i) {
-		//printf("%02x ", data[i]);
-	//}
-	//printf("\n");
-	
-	stream.addInfo(data, 11, 8080);
-
-	return true;
+/* update br_message */
+void ProxyServer::update_brdata(uint8_t* data, uint16_t len) {
+    std::cout << "update brdata " << len << std::endl;
+    std::lock_guard<std::mutex> lock(mtx);
+    memcpy(br_buffer, data, len);
+    should_update = true;
+    brdata_len = len;
 }
-*/
 
 
-//getInfo Test
-/*
-bool ProxyServer::run(bool notify) {
-	if (!initSSM()) {
-		fprintf(stderr, "init ssm error in ssm-proxy run\n");
-		return false;
-	} 
-	stream.getInfo();
+
+
+void ProxyServer::handle_msg() {
+    dssm_msg dmsg;
+    int len;
+    
+    while (true) {
+        len = msgrcv(msq_id, &dmsg, DMSG_SIZE, DMSG_CMD, 0);
+        if (len < 0) {
+            if (errno == EINTR) continue;
+            perror("msgrcv");
+            break;
+        }
+        switch (dmsg.cmd_type) {
+            case DMC_NULL: { // do nothing
+                break;
+            }
+            case DMC_BR_START: {
+                update_brdata((uint8_t*)dmsg.data, dmsg.data_len);
+                dmsg.msg_type = dmsg.res_type;
+                dmsg.cmd_type = DMSG_RES;
+                dmsg.res_type = 0xffff; // dummy
+
+                if (msgsnd(msq_id, &dmsg, DMSG_SIZE, 0) < 0) {
+                    perror("msgsnd");
+                }
+                break;
+            }
+            case DMC_BR_RECEIVE: {
+                //std::cout << "receive broadcast" << std::endl;
+                dmsg.msg_type = dmsg.res_type;
+                dmsg.cmd_type = DMSG_RES;
+                dmsg.res_type = 0xffff; // dummy
+                int count = neighbor_manager.count();
+
+                if (count > 0) {
+                    Neighbor neighbor = neighbor_manager.getFirst();
+                    std::vector<uint8_t> vec = neighbor.serialize();
+                    uint8_t* data = vec.data();
+                    dmsg.data_len = (uint16_t)vec.size();
+                    memcpy(dmsg.data, data, dmsg.data_len);
+                }
+
+                if (msgsnd(msq_id, &dmsg, DMSG_SIZE, 0) < 0) {
+                    perror("msgsnd");
+                }
+                break;
+            }
+            case DMC_BR_STOP: {
+
+                break;
+            }
+            default: {
+                printf("unknown msg %d\n", dmsg.cmd_type);
+                break;
+            }
+        }
+    }   
+
+    printf("end of handle msg\n");
 }
-*/
+
 
 
 
@@ -1148,6 +1308,11 @@ bool ProxyServer::run(bool notify)
 		});
 		send_notith.detach();
 	}
+
+    std::thread handle_msgth([this]() {
+        this->handle_msg();
+    });
+    handle_msgth.detach();
 
 
 	while (wait())

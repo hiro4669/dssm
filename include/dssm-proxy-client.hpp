@@ -63,6 +63,11 @@ private:
 	bool sendData(const char *data, uint64_t size);
 	bool recvData(); // read data recv
 
+    // for msg_queue 
+    pid_t my_pid;
+    int msq_id;
+    bool open_msgque();
+
 protected:
 
 	double saveTime;
@@ -106,6 +111,10 @@ public:
 
 	bool TCPconnectToDataServer(const char *serverName, int port);
 	bool UDPconnectToDataServer(const char *serverName, int port);
+
+    // for msg_queue
+    bool send_msg(int cmd_type, dssm_msg *msg);
+    bool receive_msg(dssm_msg *msg);
 
 	bool isOpen();
 	void *getData();

@@ -6,9 +6,15 @@
 #include <netinet/in.h>
 #include "Thread.hpp"
 #include "dssm-def.hpp"
+#include <sys/ipc.h>
+#include <sys/msg.h>
+#include <tuple>
+#include "neighbor.hpp"
 
 #include <vector>
 #include <ifaddrs.h>
+#include <mutex>
+
 
 #define BUFFER_SIZE 1024	   /* バッファバイト数 */
 
@@ -58,6 +64,14 @@ private:
 	TCPSERVER_INFO server;
 	TCPCLIENT_INFO client;
 
+	int readInt(char **p);
+	uint64_t readLong(char **p);
+	double readDouble(char **p);
+
+	void writeInt(char **p, int v);
+	void writeLong(char **p, uint64_t v);
+	void writeDouble(char **p, double v);
+
 public:
 	char *mData;
 	uint64_t mDataSize;
@@ -95,7 +109,7 @@ public:
 public:
 	DataCommunicator() = delete;
 	DataCommunicator(uint16_t nport, char *mData, uint64_t d_size, uint64_t h_size,
-					 SSMApiBase *pstream, PROXY_open_mode type, ProxyServer *proxy, bool isTCP = true);
+					 SSMApiBase *pstream, PROXY_open_mode type, bool isTCP = true);
 	~DataCommunicator();
 
 	void *run(void *args);
@@ -145,12 +159,24 @@ private:
 	/* for broadcast receiving */
 	int set_rbr_info(BROADCAST_RECVINFO *binfo);
 	void rbr_close(BROADCAST_RECVINFO *binfo);
-	std::pair<std::string , std::string> recv_br_msg(BROADCAST_RECVINFO *binfo);
-	std::pair<std::string , std::string> parse_data(char* buf, int msg_len);
+	std::tuple<std::string , std::string, uint8_t*, uint16_t> recv_br_msg(BROADCAST_RECVINFO *binfo);
+	std::tuple<std::string , std::string, uint16_t> parse_data(char* buf, int msg_len);
 	void receive_notification();
-	
+
+    std::mutex mtx;
+    uint16_t brdata_len;
+    bool should_update;
+    uint8_t br_buffer[DMSG_MAX_SIZE];
+    void update_brdata(uint8_t* data, uint16_t len);
 
 	
+    /* for msg_queue */
+    int msq_id;
+    int is_check_msgque;
+    bool open_msgque();
+    void handle_msg();
+
+    NeighborManager neighbor_manager;
 
 
 public:

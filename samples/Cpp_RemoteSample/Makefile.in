@@ -90,7 +90,7 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 noinst_PROGRAMS = read_buffer_test$(EXEEXT) read_proxy_test$(EXEEXT) \
-	write_proxy_test$(EXEEXT)
+	write_proxy_test$(EXEEXT) read_broad_test$(EXEEXT)
 subdir = samples/Cpp_RemoteSample
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/libtool.m4 \
@@ -106,13 +106,16 @@ CONFIG_HEADER = $(top_builddir)/include/config.h
 CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 PROGRAMS = $(noinst_PROGRAMS)
-am_read_buffer_test_OBJECTS = read_buffer_test.$(OBJEXT)
-read_buffer_test_OBJECTS = $(am_read_buffer_test_OBJECTS)
-read_buffer_test_LDADD = $(LDADD)
+am_read_broad_test_OBJECTS = read_broad_test.$(OBJEXT)
+read_broad_test_OBJECTS = $(am_read_broad_test_OBJECTS)
+read_broad_test_LDADD = $(LDADD)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
 am__v_lt_1 = 
+am_read_buffer_test_OBJECTS = read_buffer_test.$(OBJEXT)
+read_buffer_test_OBJECTS = $(am_read_buffer_test_OBJECTS)
+read_buffer_test_LDADD = $(LDADD)
 am_read_proxy_test_OBJECTS = read_proxy_test.$(OBJEXT)
 read_proxy_test_OBJECTS = $(am_read_proxy_test_OBJECTS)
 read_proxy_test_LDADD = $(LDADD)
@@ -134,8 +137,9 @@ am__v_at_1 =
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)/include
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__maybe_remake_depfiles = depfiles
-am__depfiles_remade = ./$(DEPDIR)/read_buffer_test.Po \
-	./$(DEPDIR)/read_proxy_test.Po ./$(DEPDIR)/write_proxy_test.Po
+am__depfiles_remade = ./$(DEPDIR)/read_broad_test.Po \
+	./$(DEPDIR)/read_buffer_test.Po ./$(DEPDIR)/read_proxy_test.Po \
+	./$(DEPDIR)/write_proxy_test.Po
 am__mv = mv -f
 CXXCOMPILE = $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
 	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
@@ -155,10 +159,10 @@ AM_V_CXXLD = $(am__v_CXXLD_@AM_V@)
 am__v_CXXLD_ = $(am__v_CXXLD_@AM_DEFAULT_V@)
 am__v_CXXLD_0 = @echo "  CXXLD   " $@;
 am__v_CXXLD_1 = 
-SOURCES = $(read_buffer_test_SOURCES) $(read_proxy_test_SOURCES) \
-	$(write_proxy_test_SOURCES)
-DIST_SOURCES = $(read_buffer_test_SOURCES) $(read_proxy_test_SOURCES) \
-	$(write_proxy_test_SOURCES)
+SOURCES = $(read_broad_test_SOURCES) $(read_buffer_test_SOURCES) \
+	$(read_proxy_test_SOURCES) $(write_proxy_test_SOURCES)
+DIST_SOURCES = $(read_broad_test_SOURCES) $(read_buffer_test_SOURCES) \
+	$(read_proxy_test_SOURCES) $(write_proxy_test_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -326,6 +330,7 @@ ssmReadSample_SOURCES = ssmReadSample.cpp
 read_buffer_test_SOURCES = read_buffer_test.cpp
 read_proxy_test_SOURCES = read_proxy_test.cpp
 write_proxy_test_SOURCES = write_proxy_test.cpp
+read_broad_test_SOURCES = read_broad_test.cpp
 all: all-am
 
 .SUFFIXES:
@@ -369,6 +374,10 @@ clean-noinstPROGRAMS:
 	echo " rm -f" $$list; \
 	rm -f $$list
 
+read_broad_test$(EXEEXT): $(read_broad_test_OBJECTS) $(read_broad_test_DEPENDENCIES) $(EXTRA_read_broad_test_DEPENDENCIES) 
+	@rm -f read_broad_test$(EXEEXT)
+	$(AM_V_CXXLD)$(CXXLINK) $(read_broad_test_OBJECTS) $(read_broad_test_LDADD) $(LIBS)
+
 read_buffer_test$(EXEEXT): $(read_buffer_test_OBJECTS) $(read_buffer_test_DEPENDENCIES) $(EXTRA_read_buffer_test_DEPENDENCIES) 
 	@rm -f read_buffer_test$(EXEEXT)
 	$(AM_V_CXXLD)$(CXXLINK) $(read_buffer_test_OBJECTS) $(read_buffer_test_LDADD) $(LIBS)
@@ -387,6 +396,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/read_broad_test.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/read_buffer_test.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/read_proxy_test.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/write_proxy_test.Po@am__quote@ # am--include-marker
@@ -548,7 +558,8 @@ clean-am: clean-generic clean-libtool clean-noinstPROGRAMS \
 	mostlyclean-am
 
 distclean: distclean-am
-		-rm -f ./$(DEPDIR)/read_buffer_test.Po
+		-rm -f ./$(DEPDIR)/read_broad_test.Po
+	-rm -f ./$(DEPDIR)/read_buffer_test.Po
 	-rm -f ./$(DEPDIR)/read_proxy_test.Po
 	-rm -f ./$(DEPDIR)/write_proxy_test.Po
 	-rm -f Makefile
@@ -596,7 +607,8 @@ install-ps-am:
 installcheck-am:
 
 maintainer-clean: maintainer-clean-am
-		-rm -f ./$(DEPDIR)/read_buffer_test.Po
+		-rm -f ./$(DEPDIR)/read_broad_test.Po
+	-rm -f ./$(DEPDIR)/read_buffer_test.Po
 	-rm -f ./$(DEPDIR)/read_proxy_test.Po
 	-rm -f ./$(DEPDIR)/write_proxy_test.Po
 	-rm -f Makefile

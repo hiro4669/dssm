@@ -15,9 +15,9 @@
       "ssm_coordinator-ssm-coordinator.o",
       "ssm-coordinator.cpp"
     ],
-    "directory": "/home/devuser/hoge/ssm/src",
-    "file": "/home/devuser/hoge/ssm/src/ssm-coordinator.cpp",
-    "output": "/home/devuser/hoge/ssm/src/ssm_coordinator-ssm-coordinator.o"
+    "directory": "/home/devuser/hoge/dssm/src",
+    "file": "/home/devuser/hoge/dssm/src/ssm-coordinator.cpp",
+    "output": "/home/devuser/hoge/dssm/src/ssm_coordinator-ssm-coordinator.o"
   },
   {
     "arguments": [
@@ -38,9 +38,9 @@
       ".libs/libssm_la-libssm-time.o",
       "libssm-time.c"
     ],
-    "directory": "/home/devuser/hoge/ssm/src",
-    "file": "/home/devuser/hoge/ssm/src/libssm-time.c",
-    "output": "/home/devuser/hoge/ssm/src/.libs/libssm_la-libssm-time.o"
+    "directory": "/home/devuser/hoge/dssm/src",
+    "file": "/home/devuser/hoge/dssm/src/libssm-time.c",
+    "output": "/home/devuser/hoge/dssm/src/.libs/libssm_la-libssm-time.o"
   },
   {
     "arguments": [
@@ -59,9 +59,9 @@
       "libssm_la-libssm-time.o",
       "libssm-time.c"
     ],
-    "directory": "/home/devuser/hoge/ssm/src",
-    "file": "/home/devuser/hoge/ssm/src/libssm-time.c",
-    "output": "/home/devuser/hoge/ssm/src/libssm_la-libssm-time.o"
+    "directory": "/home/devuser/hoge/dssm/src",
+    "file": "/home/devuser/hoge/dssm/src/libssm-time.c",
+    "output": "/home/devuser/hoge/dssm/src/libssm_la-libssm-time.o"
   },
   {
     "arguments": [
@@ -82,9 +82,9 @@
       ".libs/libssm_la-libssm-shm.o",
       "libssm-shm.c"
     ],
-    "directory": "/home/devuser/hoge/ssm/src",
-    "file": "/home/devuser/hoge/ssm/src/libssm-shm.c",
-    "output": "/home/devuser/hoge/ssm/src/.libs/libssm_la-libssm-shm.o"
+    "directory": "/home/devuser/hoge/dssm/src",
+    "file": "/home/devuser/hoge/dssm/src/libssm-shm.c",
+    "output": "/home/devuser/hoge/dssm/src/.libs/libssm_la-libssm-shm.o"
   },
   {
     "arguments": [
@@ -103,9 +103,9 @@
       "libssm_la-libssm-shm.o",
       "libssm-shm.c"
     ],
-    "directory": "/home/devuser/hoge/ssm/src",
-    "file": "/home/devuser/hoge/ssm/src/libssm-shm.c",
-    "output": "/home/devuser/hoge/ssm/src/libssm_la-libssm-shm.o"
+    "directory": "/home/devuser/hoge/dssm/src",
+    "file": "/home/devuser/hoge/dssm/src/libssm-shm.c",
+    "output": "/home/devuser/hoge/dssm/src/libssm_la-libssm-shm.o"
   },
   {
     "arguments": [
@@ -126,9 +126,9 @@
       ".libs/libssm_la-libssm.o",
       "libssm.c"
     ],
-    "directory": "/home/devuser/hoge/ssm/src",
-    "file": "/home/devuser/hoge/ssm/src/libssm.c",
-    "output": "/home/devuser/hoge/ssm/src/.libs/libssm_la-libssm.o"
+    "directory": "/home/devuser/hoge/dssm/src",
+    "file": "/home/devuser/hoge/dssm/src/libssm.c",
+    "output": "/home/devuser/hoge/dssm/src/.libs/libssm_la-libssm.o"
   },
   {
     "arguments": [
@@ -147,9 +147,9 @@
       "libssm_la-libssm.o",
       "libssm.c"
     ],
-    "directory": "/home/devuser/hoge/ssm/src",
-    "file": "/home/devuser/hoge/ssm/src/libssm.c",
-    "output": "/home/devuser/hoge/ssm/src/libssm_la-libssm.o"
+    "directory": "/home/devuser/hoge/dssm/src",
+    "file": "/home/devuser/hoge/dssm/src/libssm.c",
+    "output": "/home/devuser/hoge/dssm/src/libssm_la-libssm.o"
   },
   {
     "arguments": [
@@ -170,9 +170,9 @@
       ".libs/libssm_la-dssm-proxy-client.o",
       "dssm-proxy-client.cpp"
     ],
-    "directory": "/home/devuser/hoge/ssm/src",
-    "file": "/home/devuser/hoge/ssm/src/dssm-proxy-client.cpp",
-    "output": "/home/devuser/hoge/ssm/src/.libs/libssm_la-dssm-proxy-client.o"
+    "directory": "/home/devuser/hoge/dssm/src",
+    "file": "/home/devuser/hoge/dssm/src/dssm-proxy-client.cpp",
+    "output": "/home/devuser/hoge/dssm/src/.libs/libssm_la-dssm-proxy-client.o"
   },
   {
     "arguments": [
@@ -191,9 +191,9 @@
       "libssm_la-dssm-proxy-client.o",
       "dssm-proxy-client.cpp"
     ],
-    "directory": "/home/devuser/hoge/ssm/src",
-    "file": "/home/devuser/hoge/ssm/src/dssm-proxy-client.cpp",
-    "output": "/home/devuser/hoge/ssm/src/libssm_la-dssm-proxy-client.o"
+    "directory": "/home/devuser/hoge/dssm/src",
+    "file": "/home/devuser/hoge/dssm/src/dssm-proxy-client.cpp",
+    "output": "/home/devuser/hoge/dssm/src/libssm_la-dssm-proxy-client.o"
   },
   {
     "arguments": [
@@ -214,9 +214,9 @@
       ".libs/libssm_la-dssm-utility.o",
       "dssm-utility.cpp"
     ],
-    "directory": "/home/devuser/hoge/ssm/src",
-    "file": "/home/devuser/hoge/ssm/src/dssm-utility.cpp",
-    "output": "/home/devuser/hoge/ssm/src/.libs/libssm_la-dssm-utility.o"
+    "directory": "/home/devuser/hoge/dssm/src",
+    "file": "/home/devuser/hoge/dssm/src/dssm-utility.cpp",
+    "output": "/home/devuser/hoge/dssm/src/.libs/libssm_la-dssm-utility.o"
   },
   {
     "arguments": [
@@ -235,9 +235,9 @@
       "libssm_la-dssm-utility.o",
       "dssm-utility.cpp"
     ],
-    "directory": "/home/devuser/hoge/ssm/src",
-    "file": "/home/devuser/hoge/ssm/src/dssm-utility.cpp",
-    "output": "/home/devuser/hoge/ssm/src/libssm_la-dssm-utility.o"
+    "directory": "/home/devuser/hoge/dssm/src",
+    "file": "/home/devuser/hoge/dssm/src/dssm-utility.cpp",
+    "output": "/home/devuser/hoge/dssm/src/libssm_la-dssm-utility.o"
   },
   {
     "arguments": [
@@ -255,9 +255,9 @@
       "lsssm.o",
       "lsssm.c"
     ],
-    "directory": "/home/devuser/hoge/ssm/utilities",
-    "file": "/home/devuser/hoge/ssm/utilities/lsssm.c",
-    "output": "/home/devuser/hoge/ssm/utilities/lsssm.o"
+    "directory": "/home/devuser/hoge/dssm/utilities",
+    "file": "/home/devuser/hoge/dssm/utilities/lsssm.c",
+    "output": "/home/devuser/hoge/dssm/utilities/lsssm.o"
   },
   {
     "arguments": [
@@ -277,9 +277,9 @@
       "ssm_logger-ssm-logger.o",
       "ssm-logger.cpp"
     ],
-    "directory": "/home/devuser/hoge/ssm/utilities",
-    "file": "/home/devuser/hoge/ssm/utilities/ssm-logger.cpp",
-    "output": "/home/devuser/hoge/ssm/utilities/ssm_logger-ssm-logger.o"
+    "directory": "/home/devuser/hoge/dssm/utilities",
+    "file": "/home/devuser/hoge/dssm/utilities/ssm-logger.cpp",
+    "output": "/home/devuser/hoge/dssm/utilities/ssm_logger-ssm-logger.o"
   },
   {
     "arguments": [
@@ -287,18 +287,20 @@
       "-DHAVE_CONFIG_H",
       "-I.",
       "-I../include",
+      "-Wall",
+      "-I../include",
       "-g",
       "-O2",
       "-Wall",
       "-O2",
       "-c",
       "-o",
-      "ssm_player-ssm-player.o",
+      "ssm-player.o",
       "ssm-player.cpp"
     ],
-    "directory": "/home/devuser/hoge/ssm/utilities",
-    "file": "/home/devuser/hoge/ssm/utilities/ssm-player.cpp",
-    "output": "/home/devuser/hoge/ssm/utilities/ssm_player-ssm-player.o"
+    "directory": "/home/devuser/hoge/dssm/utilities",
+    "file": "/home/devuser/hoge/dssm/utilities/ssm-player.cpp",
+    "output": "/home/devuser/hoge/dssm/utilities/ssm-player.o"
   },
   {
     "arguments": [
@@ -316,9 +318,9 @@
       "ssm_date-ssm-date.o",
       "ssm-date.c"
     ],
-    "directory": "/home/devuser/hoge/ssm/utilities",
-    "file": "/home/devuser/hoge/ssm/utilities/ssm-date.c",
-    "output": "/home/devuser/hoge/ssm/utilities/ssm_date-ssm-date.o"
+    "directory": "/home/devuser/hoge/dssm/utilities",
+    "file": "/home/devuser/hoge/dssm/utilities/ssm-date.c",
+    "output": "/home/devuser/hoge/dssm/utilities/ssm_date-ssm-date.o"
   },
   {
     "arguments": [
@@ -336,9 +338,9 @@
       "ssm_monitor-ssm-monitor.o",
       "ssm-monitor.c"
     ],
-    "directory": "/home/devuser/hoge/ssm/utilities",
-    "file": "/home/devuser/hoge/ssm/utilities/ssm-monitor.c",
-    "output": "/home/devuser/hoge/ssm/utilities/ssm_monitor-ssm-monitor.o"
+    "directory": "/home/devuser/hoge/dssm/utilities",
+    "file": "/home/devuser/hoge/dssm/utilities/ssm-monitor.c",
+    "output": "/home/devuser/hoge/dssm/utilities/ssm_monitor-ssm-monitor.o"
   },
   {
     "arguments": [
@@ -356,9 +358,9 @@
       "ssm_graph-ssm-graph.o",
       "ssm-graph.cpp"
     ],
-    "directory": "/home/devuser/hoge/ssm/utilities",
-    "file": "/home/devuser/hoge/ssm/utilities/ssm-graph.cpp",
-    "output": "/home/devuser/hoge/ssm/utilities/ssm_graph-ssm-graph.o"
+    "directory": "/home/devuser/hoge/dssm/utilities",
+    "file": "/home/devuser/hoge/dssm/utilities/ssm-graph.cpp",
+    "output": "/home/devuser/hoge/dssm/utilities/ssm_graph-ssm-graph.o"
   },
   {
     "arguments": [
@@ -379,9 +381,9 @@
       "dssm_proxy-dssm-proxy.o",
       "dssm-proxy.cpp"
     ],
-    "directory": "/home/devuser/hoge/ssm/utilities",
-    "file": "/home/devuser/hoge/ssm/utilities/dssm-proxy.cpp",
-    "output": "/home/devuser/hoge/ssm/utilities/dssm_proxy-dssm-proxy.o"
+    "directory": "/home/devuser/hoge/dssm/utilities",
+    "file": "/home/devuser/hoge/dssm/utilities/dssm-proxy.cpp",
+    "output": "/home/devuser/hoge/dssm/utilities/dssm_proxy-dssm-proxy.o"
   },
   {
     "arguments": [
@@ -402,9 +404,9 @@
       "../src/dssm_proxy-dssm-utility.o",
       "../src/dssm-utility.cpp"
     ],
-    "directory": "/home/devuser/hoge/ssm/utilities",
-    "file": "/home/devuser/hoge/ssm/src/dssm-utility.cpp",
-    "output": "/home/devuser/hoge/ssm/src/dssm_proxy-dssm-utility.o"
+    "directory": "/home/devuser/hoge/dssm/utilities",
+    "file": "/home/devuser/hoge/dssm/src/dssm-utility.cpp",
+    "output": "/home/devuser/hoge/dssm/src/dssm_proxy-dssm-utility.o"
   },
   {
     "arguments": [
@@ -423,9 +425,9 @@
       "SensorAHandler.o",
       "SensorAHandler.c"
     ],
-    "directory": "/home/devuser/hoge/ssm/samples/C_Sample",
-    "file": "/home/devuser/hoge/ssm/samples/C_Sample/SensorAHandler.c",
-    "output": "/home/devuser/hoge/ssm/samples/C_Sample/SensorAHandler.o"
+    "directory": "/home/devuser/hoge/dssm/samples/C_Sample",
+    "file": "/home/devuser/hoge/dssm/samples/C_Sample/SensorAHandler.c",
+    "output": "/home/devuser/hoge/dssm/samples/C_Sample/SensorAHandler.o"
   },
   {
     "arguments": [
@@ -444,9 +446,9 @@
       "SensorAContinualRead.o",
       "SensorAContinualRead.c"
     ],
-    "directory": "/home/devuser/hoge/ssm/samples/C_Sample",
-    "file": "/home/devuser/hoge/ssm/samples/C_Sample/SensorAContinualRead.c",
-    "output": "/home/devuser/hoge/ssm/samples/C_Sample/SensorAContinualRead.o"
+    "directory": "/home/devuser/hoge/dssm/samples/C_Sample",
+    "file": "/home/devuser/hoge/dssm/samples/C_Sample/SensorAContinualRead.c",
+    "output": "/home/devuser/hoge/dssm/samples/C_Sample/SensorAContinualRead.o"
   },
   {
     "arguments": [
@@ -465,9 +467,9 @@
       "SensorAIntervalRead.o",
       "SensorAIntervalRead.c"
     ],
-    "directory": "/home/devuser/hoge/ssm/samples/C_Sample",
-    "file": "/home/devuser/hoge/ssm/samples/C_Sample/SensorAIntervalRead.c",
-    "output": "/home/devuser/hoge/ssm/samples/C_Sample/SensorAIntervalRead.o"
+    "directory": "/home/devuser/hoge/dssm/samples/C_Sample",
+    "file": "/home/devuser/hoge/dssm/samples/C_Sample/SensorAIntervalRead.c",
+    "output": "/home/devuser/hoge/dssm/samples/C_Sample/SensorAIntervalRead.o"
   },
   {
     "arguments": [
@@ -486,9 +488,9 @@
       "SensorAPastRead.o",
       "SensorAPastRead.c"
     ],
-    "directory": "/home/devuser/hoge/ssm/samples/C_Sample",
-    "file": "/home/devuser/hoge/ssm/samples/C_Sample/SensorAPastRead.c",
-    "output": "/home/devuser/hoge/ssm/samples/C_Sample/SensorAPastRead.o"
+    "directory": "/home/devuser/hoge/dssm/samples/C_Sample",
+    "file": "/home/devuser/hoge/dssm/samples/C_Sample/SensorAPastRead.c",
+    "output": "/home/devuser/hoge/dssm/samples/C_Sample/SensorAPastRead.o"
   },
   {
     "arguments": [
@@ -507,9 +509,9 @@
       "SensorBHandler.o",
       "SensorBHandler.c"
     ],
-    "directory": "/home/devuser/hoge/ssm/samples/C_Sample",
-    "file": "/home/devuser/hoge/ssm/samples/C_Sample/SensorBHandler.c",
-    "output": "/home/devuser/hoge/ssm/samples/C_Sample/SensorBHandler.o"
+    "directory": "/home/devuser/hoge/dssm/samples/C_Sample",
+    "file": "/home/devuser/hoge/dssm/samples/C_Sample/SensorBHandler.c",
+    "output": "/home/devuser/hoge/dssm/samples/C_Sample/SensorBHandler.o"
   },
   {
     "arguments": [
@@ -528,9 +530,9 @@
       "SensorABSync.o",
       "SensorABSync.c"
     ],
-    "directory": "/home/devuser/hoge/ssm/samples/C_Sample",
-    "file": "/home/devuser/hoge/ssm/samples/C_Sample/SensorABSync.c",
-    "output": "/home/devuser/hoge/ssm/samples/C_Sample/SensorABSync.o"
+    "directory": "/home/devuser/hoge/dssm/samples/C_Sample",
+    "file": "/home/devuser/hoge/dssm/samples/C_Sample/SensorABSync.c",
+    "output": "/home/devuser/hoge/dssm/samples/C_Sample/SensorABSync.o"
   },
   {
     "arguments": [
@@ -549,9 +551,9 @@
       "ssmReadSample.o",
       "ssmReadSample.cpp"
     ],
-    "directory": "/home/devuser/hoge/ssm/samples/Cpp_Sample",
-    "file": "/home/devuser/hoge/ssm/samples/Cpp_Sample/ssmReadSample.cpp",
-    "output": "/home/devuser/hoge/ssm/samples/Cpp_Sample/ssmReadSample.o"
+    "directory": "/home/devuser/hoge/dssm/samples/Cpp_Sample",
+    "file": "/home/devuser/hoge/dssm/samples/Cpp_Sample/ssmReadSample.cpp",
+    "output": "/home/devuser/hoge/dssm/samples/Cpp_Sample/ssmReadSample.o"
   },
   {
     "arguments": [
@@ -570,9 +572,9 @@
       "ssmWriteSample.o",
       "ssmWriteSample.cpp"
     ],
-    "directory": "/home/devuser/hoge/ssm/samples/Cpp_Sample",
-    "file": "/home/devuser/hoge/ssm/samples/Cpp_Sample/ssmWriteSample.cpp",
-    "output": "/home/devuser/hoge/ssm/samples/Cpp_Sample/ssmWriteSample.o"
+    "directory": "/home/devuser/hoge/dssm/samples/Cpp_Sample",
+    "file": "/home/devuser/hoge/dssm/samples/Cpp_Sample/ssmWriteSample.cpp",
+    "output": "/home/devuser/hoge/dssm/samples/Cpp_Sample/ssmWriteSample.o"
   },
   {
     "arguments": [
@@ -591,9 +593,9 @@
       "read_buffer_test.o",
       "read_buffer_test.cpp"
     ],
-    "directory": "/home/devuser/hoge/ssm/samples/Cpp_RemoteSample",
-    "file": "/home/devuser/hoge/ssm/samples/Cpp_RemoteSample/read_buffer_test.cpp",
-    "output": "/home/devuser/hoge/ssm/samples/Cpp_RemoteSample/read_buffer_test.o"
+    "directory": "/home/devuser/hoge/dssm/samples/Cpp_RemoteSample",
+    "file": "/home/devuser/hoge/dssm/samples/Cpp_RemoteSample/read_buffer_test.cpp",
+    "output": "/home/devuser/hoge/dssm/samples/Cpp_RemoteSample/read_buffer_test.o"
   },
   {
     "arguments": [
@@ -612,9 +614,9 @@
       "read_proxy_test.o",
       "read_proxy_test.cpp"
     ],
-    "directory": "/home/devuser/hoge/ssm/samples/Cpp_RemoteSample",
-    "file": "/home/devuser/hoge/ssm/samples/Cpp_RemoteSample/read_proxy_test.cpp",
-    "output": "/home/devuser/hoge/ssm/samples/Cpp_RemoteSample/read_proxy_test.o"
+    "directory": "/home/devuser/hoge/dssm/samples/Cpp_RemoteSample",
+    "file": "/home/devuser/hoge/dssm/samples/Cpp_RemoteSample/read_proxy_test.cpp",
+    "output": "/home/devuser/hoge/dssm/samples/Cpp_RemoteSample/read_proxy_test.o"
   },
   {
     "arguments": [
@@ -633,8 +635,8 @@
       "write_proxy_test.o",
       "write_proxy_test.cpp"
     ],
-    "directory": "/home/devuser/hoge/ssm/samples/Cpp_RemoteSample",
-    "file": "/home/devuser/hoge/ssm/samples/Cpp_RemoteSample/write_proxy_test.cpp",
-    "output": "/home/devuser/hoge/ssm/samples/Cpp_RemoteSample/write_proxy_test.o"
+    "directory": "/home/devuser/hoge/dssm/samples/Cpp_RemoteSample",
+    "file": "/home/devuser/hoge/dssm/samples/Cpp_RemoteSample/write_proxy_test.cpp",
+    "output": "/home/devuser/hoge/dssm/samples/Cpp_RemoteSample/write_proxy_test.o"
   }
 ]

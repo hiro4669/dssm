@@ -32,6 +32,13 @@ void ctrlC(int aStatus)
 // Ctrl-C による正常終了を設定
 inline void setSigInt(){ signal(SIGINT, ctrlC); }
 
+typedef struct {
+    int ival;
+    double dval;
+    char cval[32];
+} param;
+
+
 int main(int aArgc, char **aArgv) {
 	/*
 	 * 変数の宣言
@@ -42,18 +49,21 @@ int main(int aArgc, char **aArgv) {
 	 * data型とproperty型は ./intSsm.h に定義
 	 * 指定しているIPはループバックアドレス(自分自身)
 	 */
-	//DSSMApi<intSsm_k, doubleProperty_p> con(SNAME_INT, 1);
-	DSSMApi<intSsm_k, props_p> con(SNAME_INT, 1);
+	//DSSMApi<intSsm_k, props_p> con(SNAME_INT, 1);
+	DSSMApi<intSsm_k, props_p, param> con(SNAME_INT, 1);
 
-	/*
-	while(!con.initRemote()) {
-		printf("waitwait");
-		sleep(2);
-	}
-	*/
+    // set broadcast data
+    con.br_data.ival = 123;
+    con.br_data.dval = 456.789;
+    strncpy(con.br_data.cval, "Hello DSSM", 32);
+    void* data = malloc(sizeof(param));
+    memset(data, 0, sizeof(param));
+    memcpy(data, (char*)con.pbr_data, sizeof(param));
 
 	con.initRemote();
-	
+
+    // send broadcast to proxy server
+    con.sendBroadcast();
 
 	// 共有メモリにSSMで領域を確保
 	// create 失敗するとfalseを返す
