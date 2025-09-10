@@ -165,7 +165,6 @@ private:
 
     std::mutex mtx;
     uint16_t brdata_len;
-    bool should_update;
     uint8_t br_buffer[DMSG_MAX_SIZE];
     void update_brdata(uint8_t* data, uint16_t len);
 

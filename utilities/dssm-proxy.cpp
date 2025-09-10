@@ -522,7 +522,6 @@ ProxyServer::ProxyServer()
     is_check_msgque = 1;
     brdata_len = 0;
     memset(br_buffer, 0, DMSG_MAX_SIZE);
-    should_update = false;
 }
 
 ProxyServer::~ProxyServer()
@@ -1164,19 +1163,21 @@ uint16_t ProxyServer::create_msg(char* buffer, std::string ipaddr_str, int port)
     len += port_str.length();
     len += 4;
 
-    len += brdata_len;
+    {
+        std::lock_guard<std::mutex> lock(mtx);
+        len += brdata_len;
+        int idx = 0;
+        buffer[idx++] = (len >> 8) & 0xff;
+        buffer[idx++] = (len >> 0) & 0xff;
+        buffer[idx++] = ipaddr_str.length() & 0xff;
+        memcpy(&buffer[idx], ipaddr_str.c_str(), ipaddr_str.length());
+        idx += ipaddr_str.length();
+        buffer[idx++] = port_str.length();    
+        memcpy(&buffer[idx], port_str.c_str(), port_str.length());    
 
-    int idx = 0;
-    buffer[idx++] = (len >> 8) & 0xff;
-    buffer[idx++] = (len >> 0) & 0xff;
-    buffer[idx++] = ipaddr_str.length() & 0xff;
-    memcpy(&buffer[idx], ipaddr_str.c_str(), ipaddr_str.length());
-    idx += ipaddr_str.length();
-    buffer[idx++] = port_str.length();    
-    memcpy(&buffer[idx], port_str.c_str(), port_str.length());    
-
-    idx += port_str.length();
-    memcpy(&buffer[idx], br_buffer, brdata_len);
+        idx += port_str.length();
+        memcpy(&buffer[idx], br_buffer, brdata_len);
+    }
 
 	return len;
 }
@@ -1220,7 +1221,6 @@ void ProxyServer::update_brdata(uint8_t* data, uint16_t len) {
     std::cout << "update brdata " << len << std::endl;
     std::lock_guard<std::mutex> lock(mtx);
     memcpy(br_buffer, data, len);
-    should_update = true;
     brdata_len = len;
 }
 
