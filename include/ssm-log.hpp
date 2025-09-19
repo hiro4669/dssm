@@ -252,7 +252,8 @@ public:
 		mLogFile->clear(  ); // eofになっているとseekできないので
 		std::fstream::pos_type pos,curPos = mLogFile->tellg();
 		// シーク
-		mLogFile->seekg( static_cast<int>( sizeof( ssmTimeT ) + mDataSize ) * diff, std::ios::cur );
+		//mLogFile->seekg( static_cast<int>( sizeof( ssmTimeT ) + mDataSize ) * diff, std::ios::cur );
+		mLogFile->seekg( static_cast<long long>( sizeof( ssmTimeT ) + mDataSize ) * diff, std::ios::cur );
 		// シークに成功したかをチェック
 		pos = mLogFile->tellg( );
 		if( pos < mStartPos || pos > mEndPos )
