@@ -78,7 +78,6 @@ public:
         memcpy(msg.data, (char*)pbr_data, sizeof(U));
         send_msg(DMC_BR_START, &msg);
         receive_msg(&msg);
-        printf("receive msg = %ld\n", msg.res_type);
         return true;
     }
 
@@ -86,6 +85,11 @@ public:
         dssm_msg msg;
         send_msg(DMC_BR_RECEIVE, NULL);
         receive_msg(&msg);
+
+        if (msg.res_type != DMC_REP_OK) {
+            fprintf(stderr, "msg cannot received correctly\n");
+            return false;
+        }
 
         int idx = 0;
         uint16_t ipaddr_len = (uint16_t)(msg.data[idx+1] << 8 | msg.data[idx]);

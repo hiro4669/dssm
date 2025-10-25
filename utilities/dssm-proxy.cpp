@@ -565,6 +565,8 @@ bool ProxyServer::open_msgque()
 		fprintf( stderr, "maybe dssm-proxy has started.\n" );
 	}
 
+    printf("msgque is ready\n");
+
     return true;
 }
 
@@ -1231,6 +1233,7 @@ void ProxyServer::handle_msg() {
     dssm_msg dmsg;
     int len;
     
+    printf("handle msg is invoked\n");
     while (true) {
         len = msgrcv(msq_id, &dmsg, DMSG_SIZE, DMSG_CMD, 0);
         if (len < 0) {
@@ -1246,7 +1249,7 @@ void ProxyServer::handle_msg() {
                 update_brdata((uint8_t*)dmsg.data, dmsg.data_len);
                 dmsg.msg_type = dmsg.res_type;
                 dmsg.cmd_type = DMSG_RES;
-                dmsg.res_type = 0xffff; // dummy
+                dmsg.res_type = DMC_REP_OK;
 
                 if (msgsnd(msq_id, &dmsg, DMSG_SIZE, 0) < 0) {
                     perror("msgsnd");
@@ -1257,7 +1260,7 @@ void ProxyServer::handle_msg() {
                 //std::cout << "receive broadcast" << std::endl;
                 dmsg.msg_type = dmsg.res_type;
                 dmsg.cmd_type = DMSG_RES;
-                dmsg.res_type = 0xffff; // dummy
+                dmsg.res_type = DMC_REP_FAIL;
                 int count = neighbor_manager.count();
 
                 if (count > 0) {
@@ -1266,6 +1269,7 @@ void ProxyServer::handle_msg() {
                     uint8_t* data = vec.data();
                     dmsg.data_len = (uint16_t)vec.size();
                     memcpy(dmsg.data, data, dmsg.data_len);
+                    dmsg.res_type = DMC_REP_OK;
                 }
 
                 if (msgsnd(msq_id, &dmsg, DMSG_SIZE, 0) < 0) {
@@ -1274,7 +1278,6 @@ void ProxyServer::handle_msg() {
                 break;
             }
             case DMC_BR_STOP: {
-
                 break;
             }
             default: {
@@ -1399,13 +1402,13 @@ int main(int argc, char* argv[])
 	std::cout << std::endl;
 	std::cout << " --------------------------------------------------\n";
 	std::cout << " DSSM ( Distribute Streaming data Sharing Manager )\n";
-	std::cout << " Ver. 1.2\n";
+	std::cout << " Ver. 1.3\n";
+	std::cout << " broadcast option available (./dssm-proxy -b)\n";
 	std::cout << " --------------------------------------------------\n\n";
 
 
 	/* Use Broadcast Feature */
 	bool use_broadcast = false;
-	std::cout << "arg len = " << argc << std::endl;
 	if (argc > 1 && std::string(argv[1]) == "-b") {
 		std::cout << "use broadcast " << std::endl;
 		use_broadcast = true;

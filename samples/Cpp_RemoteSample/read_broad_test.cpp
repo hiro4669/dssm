@@ -45,10 +45,11 @@ int main() {
     con.initRemote();
     
     sleepSSM(1); // wait for init
-    con.receiveBroadcast();
-    printf("ival = %d\n", con.br_data.ival);
-    printf("dval = %f\n", con.br_data.dval);
-    printf("cval = %s\n", con.br_data.cval);;
+    if (con.receiveBroadcast()) {
+        printf("ival = %d\n", con.br_data.ival);
+        printf("dval = %f\n", con.br_data.dval);
+        printf("cval = %s\n", con.br_data.cval);;
+    }
 
 
     

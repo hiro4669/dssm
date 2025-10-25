@@ -416,9 +416,9 @@ bool PConnector::send_msg(int cmd_type, dssm_msg *msg) {
 
 bool PConnector::receive_msg(dssm_msg *msg) {
 #ifdef __APPLE__
-    volatile ssize_t len;
+    volatile ssize_t len = 0;
 #else
-    ssize_t len;
+    ssize_t len = 0;
 #endif
 
     if (msq_id < 0) {
@@ -432,6 +432,7 @@ bool PConnector::receive_msg(dssm_msg *msg) {
         fprintf(stderr, "msg cannot be received correctly\n");
         return false;
     }
+
     return true;
 }
 
@@ -442,9 +443,7 @@ bool PConnector::initRemote() {
     if ( !open_msgque() ) {
         fprintf(stderr, "Cannot use broadcast\n");
         return false;
-    } else {
-        fprintf(stderr, "msq_id=%d\n", msq_id);
-    }
+    } 
 
 	while (!connectToServer(ipaddr, SERVER_PORT)) {
 		fprintf(stderr, "wait 2 second to connect\n");

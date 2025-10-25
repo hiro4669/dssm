@@ -60,6 +60,7 @@ typedef struct {
 	ssmTimeT time;   //
 } thrd_msg;
 
+/* Message exchanged between PConnector and DSSM Proxy */
 typedef struct {
     long msg_type;
     long res_type;
@@ -68,12 +69,18 @@ typedef struct {
     uint8_t data[DMSG_MAX_SIZE];
 } dssm_msg;  
 
-
+/* Command Type for Message in DSSM Proxy*/
 enum {
     DMC_NULL = 0,
     DMC_BR_START,
     DMC_BR_RECEIVE,
     DMC_BR_STOP,
+};
+
+/* Reply type for Message in DSSM Proxy */
+enum {
+    DMC_REP_OK = 1,
+    DMC_REP_FAIL = 99,
 };
 #define DMSG_SIZE (sizeof(dssm_msg) - sizeof(long))
 
