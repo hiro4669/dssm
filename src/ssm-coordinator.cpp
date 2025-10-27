@@ -581,6 +581,8 @@ int msq_loop( void )
 		case MC_GETINFO: {
 			if( verbosity_mode >= 2 )
 				printf( "message: get information size\n" );			
+            // this is removed
+            /*
 			struct host_info {
 				long msg_type;
 				char buffer[MSQ_BUF_SIZE];
@@ -605,6 +607,7 @@ int msq_loop( void )
 				if (write_len == total_len) break;
 			}			
 			free(buffer);
+            */
 			break;
 		}
 		case MC_CLOSE:

@@ -36,10 +36,11 @@ class Neighbor {
         this->ip_addr = ip_addr;
         this->port = port;
         this->updateTime();
+        this->br_data_len = br_data_len;
         if (br_data_len > 0 && br_data != nullptr) {
-            this->br_data_len = br_data_len;
             std::memcpy(this->br_data, br_data, br_data_len);
         } 
+
     }
     ~Neighbor(){}
 
@@ -71,7 +72,7 @@ class NeighborManager {
     void add(Neighbor nb);
     bool find(Neighbor nb);
     size_t count();
-    bool serialize(char* buffer);
+    std::vector<uint8_t> serialize();
     Neighbor getFirst();
 };
 
@@ -101,16 +102,20 @@ inline std::vector<uint8_t> Neighbor::serialize() {
     uint16_t ip_len = (uint16_t)ip_addr_str.length();
     uint16_t port_len = (uint16_t)port_str.length();
 
+
     buffer.insert(buffer.end(), reinterpret_cast<uint8_t*>(&ip_len), 
             reinterpret_cast<uint8_t*>(&ip_len) + sizeof(uint16_t));
     buffer.insert(buffer.end(), ip_addr_str.begin(), ip_addr_str.end());
+
 
     buffer.insert(buffer.end(), reinterpret_cast<uint8_t*>(&port_len), 
             reinterpret_cast<uint8_t*>(&port_len) + sizeof(uint16_t));
     buffer.insert(buffer.end(), port_str.begin(), port_str.end());
 
+
     buffer.insert(buffer.end(), reinterpret_cast<uint8_t*>(&br_data_len), 
             reinterpret_cast<uint8_t*>(&br_data_len) + sizeof(uint16_t));
+
     if (br_data_len > 0) {
         buffer.insert(buffer.end(), this->br_data, this->br_data + br_data_len);
     }
@@ -159,8 +164,25 @@ inline bool NeighborManager::find(Neighbor nb) {
 
 
 
-inline bool NeighborManager::serialize(char* buffer) {
-    //std::cout << "serialize" << std::endl;
+inline std::vector<uint8_t> NeighborManager::serialize() {
+    printf("serialize invoked\n");
+    std::vector<uint8_t> buffer;
+    for (auto it : this->nmap) {
+        Neighbor nb = it.second;
+        std::vector<uint8_t> v = nb.serialize();
+        buffer.insert(buffer.end(), v.begin(), v.end());
+    }
+
+    uint16_t count = this->count();
+    buffer.insert(buffer.begin(), reinterpret_cast<uint8_t*>(&count),
+            reinterpret_cast<uint8_t*>(&count) + sizeof(uint16_t));
+
+    uint32_t total_size = buffer.size() + sizeof(uint32_t);
+    buffer.insert(buffer.begin(), reinterpret_cast<uint8_t*>(&total_size),
+            reinterpret_cast<uint8_t*>(&total_size) + sizeof(uint32_t));
+
+
+    /*
     int idx = 2;
     for (auto it : this->nmap) {
         Neighbor nb = it.second;
@@ -172,20 +194,8 @@ inline bool NeighborManager::serialize(char* buffer) {
         memcpy(&buffer[idx], port_str.c_str(), port_str.length());
         idx += 5;
     }
-
-    int size = this->nmap.size();
-    buffer[0] = (size >> 8) & 0xff;
-    buffer[1] = size & 0xff;
-
-    /*
-    for (int i = 0; i < size * IPINFO_SIZE + 2; ++i) {
-        if (i % 16 == 0) printf("\n");
-        printf("%02x ", buffer[i]);
-    }
-    printf("\n");
     */
-    
 
-    return true;
+    return buffer;
 }
 #endif

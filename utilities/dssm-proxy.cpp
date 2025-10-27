@@ -1066,8 +1066,10 @@ std::tuple<std::string , std::string, uint16_t> ProxyServer::parse_data(char* bu
     idx += 2;
     uint8_t ip_len = buf[idx++];
     std::string ip_addr_str(&buf[idx], 0,  ip_len);
+
     idx += ip_len;
     uint8_t port_len = buf[idx++];    
+
     std::string port_str(&buf[idx], 0, port_len);
 
     idx += port_len;
@@ -1078,6 +1080,7 @@ std::tuple<std::string, std::string, uint8_t*, uint16_t> ProxyServer::recv_br_ms
 	char recv_msg[BR_MAX_SIZE];
     memset(recv_msg, 0, BR_MAX_SIZE);
 	int msg_len = recvfrom(binfo->sd, recv_msg, BR_MAX_SIZE, 0, NULL, 0);
+
     std::tuple<std::string, std::string, uint16_t> info =  parse_data(recv_msg, msg_len);
 
     uint8_t* recv_data = (uint8_t*)malloc(msg_len - std::get<2>(info));
@@ -1097,21 +1100,18 @@ void ProxyServer::receive_notification() {
 		std::tuple<std::string, std::string, uint8_t*, uint16_t> hinfo = this->recv_br_msg(&binfo);
         std::string ip_addr_str = std::get<0>(hinfo);
         std::string port_str = std::get<1>(hinfo);
+        uint8_t* data = std::get<2>(hinfo);
+        uint16_t data_len = std::get<3>(hinfo);
 
-        if (!ip_addr_str.empty() || port_str.empty()) {
-
+        if (!ip_addr_str.empty() && !port_str.empty()) {
             uint16_t port = (uint16_t)std::stoi(port_str);
-            uint8_t* data = std::get<2>(hinfo);
-            uint16_t data_len = std::get<3>(hinfo);
-
             Neighbor nbr = (data_len > 0) ? 
                 Neighbor(ip_addr_str, port, data_len, data) : 
                 Neighbor(ip_addr_str, port);
             
-            neighbor_manager.add(nbr);
-
-            free(data);
+            neighbor_manager.add(nbr); // overwrite if it exists
         }
+        free(data);
 	}
 }
 

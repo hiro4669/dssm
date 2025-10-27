@@ -56,9 +56,9 @@ int main(int aArgc, char **aArgv) {
     con.br_data.ival = 123;
     con.br_data.dval = 456.789;
     strncpy(con.br_data.cval, "Hello DSSM", 32);
-    void* data = malloc(sizeof(param));
-    memset(data, 0, sizeof(param));
-    memcpy(data, (char*)con.pbr_data, sizeof(param));
+//    void* data = malloc(sizeof(param));
+//   memset(data, 0, sizeof(param));
+//  memcpy(data, (char*)con.pbr_data, sizeof(param));
 
 	con.initRemote();
 
