@@ -1264,10 +1264,22 @@ void ProxyServer::handle_msg() {
                 int count = neighbor_manager.count();
 
                 if (count > 0) {
-                    Neighbor neighbor = neighbor_manager.getFirst();
-                    std::vector<uint8_t> vec = neighbor.serialize();
-                    uint8_t* data = vec.data();
-                    dmsg.data_len = (uint16_t)vec.size();
+                    // for test
+                    Neighbor testnb = Neighbor("10.0.0.1", 9999);
+                    neighbor_manager.add(testnb);
+                    // end for test
+                    std::vector<uint8_t> buffer = neighbor_manager.serialize();
+
+                    /*
+                    for (int i = 0; i < buffer.size(); ++i) {
+                        if (i % 16 == 0) printf("\n");
+                        printf("%02x ", buffer[i]);
+                    }
+                    printf("\n");
+                    */
+
+                    uint8_t* data = buffer.data();
+                    dmsg.data_len = (uint16_t)buffer.size();
                     memcpy(dmsg.data, data, dmsg.data_len);
                     dmsg.res_type = DMC_REP_OK;
                 }

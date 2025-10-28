@@ -15,6 +15,7 @@
 #include <thread>
 #include <functional>
 #include <cstring>
+#include <vector>
 
 #include "dssm-def.hpp"
 
@@ -56,6 +57,13 @@ public:
     U br_data;
     U *pbr_data;
 
+    struct BrInfo {
+        std::string ipaddr;
+        std::string port;
+        bool data_flg;
+        U data;
+    };
+
 	DSSMApi() {
 		initApi();
 	}
@@ -81,39 +89,59 @@ public:
         return true;
     }
 
-    bool receiveBroadcast() {
+    std::vector<BrInfo> receiveBroadcast() {
+        BrInfo bInfo;
+        std::vector<BrInfo> iList;
+
         dssm_msg msg;
         send_msg(DMC_BR_RECEIVE, NULL);
         receive_msg(&msg);
 
         if (msg.res_type != DMC_REP_OK) {
             fprintf(stderr, "msg cannot received correctly\n");
-            return false;
+            return iList;
         }
 
-        int idx = 0;
-        uint16_t ipaddr_len = (uint16_t)(msg.data[idx+1] << 8 | msg.data[idx]);
-        idx += 2;
-//        printf("ipaddr_len = %d\n", ipaddr_len);
-        std::string ipaddr_str = std::string((char*)&msg.data[idx], ipaddr_len);
-        std::cout << "ipaddr_str = " << ipaddr_str << std::endl;
-        idx += ipaddr_len;
-        uint16_t port_len = (uint16_t)(msg.data[idx+1] << 8 | msg.data[idx]);
-        idx += 2;
- //       printf("port_len = %d\n", port_len);
-        std::string port_str = std::string((char*)&msg.data[idx], port_len);
-        idx += port_len;
-        std::cout << "port_str = " << port_str << std::endl;
-        uint16_t data_len = (uint16_t)(msg.data[idx+1] << 8 | msg.data[idx]);
-        idx += 2;
-//        printf("data_len = %d\n", data_len);
-        if (data_len > 0) {
-            memcpy(pbr_data, &msg.data[idx], data_len);
+        // received length will be used in the future
+        //uint32_t len = (uint32_t)(msg.data[3] << 24 | msg.data[2] << 16 | msg.data[1] << 8 | msg.data[0]);
+        /*
+        printf("len = %d\n", len);
+        printf("\n>>> Binary <<<\n");
+        for (int i = 0; i < len; ++i) {
+            if (i % 16 == 0) printf("\n");
+            printf("%02x ", msg.data[i]);
         }
-        
+        printf("\n");
+        */
 
+        uint16_t count = (uint16_t)(msg.data[5] << 8 | msg.data[4]);
+        int idx = 6;
+        for (int i = 0; i < count; ++i) {
+            int ip_len = (uint16_t)(msg.data[idx+1] << 8 | msg.data[idx]);
+            idx += 2;
+            std::string ipaddr_str((char*)&msg.data[idx], ip_len);
+            idx += ip_len;
+            int port_len = (uint16_t)(msg.data[idx+1] << 8 | msg.data[idx]);
+            idx += 2;
+            std::string port_str((char*)&msg.data[idx], port_len);
+            idx += port_len;
+            int data_len = (uint16_t)(msg.data[idx+1] << 8 | msg.data[idx]);
+            idx += 2;
 
-        return true;
+            bInfo.ipaddr = ipaddr_str;
+            bInfo.port = port_str;
+            bInfo.data_flg = false;
+            if (data_len > 0) {
+                memcpy(&bInfo.data, &msg.data[idx], data_len);
+                bInfo.data_flg = true;
+                idx += data_len;
+            }
+            iList.push_back(bInfo);
+            printf("i = %d\n", i);
+        }
+        //printf("host count = %ld\n", iList.size());
+
+        return iList;
     }
 
 	// Hiroaki Fukuda
