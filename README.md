@@ -42,3 +42,32 @@ You can run two types of example: executing local, using network
 
 If you want to use buffered features (recommended if you use WiFi)
 1. Run `samples/Cpp_RemoteSample/read_buffer_test`
+
+
+#### Broadcast Example
+If you want to use broadcast function, you can exchange any typed data using template. Also, by default, broadcast function exchanges IP Address and Port Number. If you specify the type as template, you can exchange the data in addition to IP Address and Port Number.
+
+Example:
+For sending
+```
+typedef struct {
+    int ival;
+    double dval;
+    char cval[32];
+} param;
+
+int main(int aArgc, char **aArgv) {
+    // third type is the data exchanged using broadcast
+	DSSMApi<intSsm_k, props_p, param> con(SNAME_INT, 1);
+    .....
+    // invoke this method if you exchange your own data
+    con.sendBroadcast()
+```
+For receiving
+Broadcast function exchange all information and store it on DSSMProxy.
+To get the information, you can use `con.reeiveBroadcast()` method.
+This method returns a vector of DSSMApi::BrInfo as `std::vector<DSSMApi<...>::BrInfo`
+
+You can see how to use it via `samples/CppRemoteSample/read_broad_test.cpp
+
+
