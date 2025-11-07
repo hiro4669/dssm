@@ -8,6 +8,7 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <vector>
+#include <chrono>
 
 #include "dssm-def.hpp"
 
@@ -20,22 +21,23 @@
 class Neighbor {
     private:
     std::string ip_addr;
-    struct timespec ltime;
     int port;
     uint16_t br_data_len;
     uint8_t br_data[BR_MAX_SIZE];
+    long long update_time;
 
     public:
     Neighbor(){
         this->ip_addr = "127.0.0.1";
         this->port = 0;
         this->br_data_len = 0;
+        this->updateTime(0);
         std::memset(this->br_data, 0, BR_MAX_SIZE);
     }
     Neighbor(std::string ip_addr, int port, int br_data_len = 0, uint8_t* br_data = nullptr) {
         this->ip_addr = ip_addr;
         this->port = port;
-        this->updateTime();
+        this->updateTime(0);
         this->br_data_len = br_data_len;
         if (br_data_len > 0 && br_data != nullptr) {
             std::memcpy(this->br_data, br_data, br_data_len);
@@ -47,26 +49,25 @@ class Neighbor {
     std::string getIpAddress();
     int getPort();
     void showInfo();
-    void updateTime();
+    void updateTime(long long utime);
+    long long getUpdateTime();
     std::vector<uint8_t> serialize();
 };
 
 
 class NeighborManager {
     private:
-    std::map<std::string, Neighbor> nmap;
+    std::map<std::string, Neighbor> nmap; // key: ipaddress, value: Neighbor
+    std::tm base_tm = {};
 
     public:
     NeighborManager() {
-        // for test
-        /*
-        Neighbor nb1("10.0.0.1", 8080);
-        Neighbor nb2("192.168.0.1", 12000);
-        this->nmap[nb1.getIpAddress()] = nb1;
-        this->nmap[nb2.getIpAddress()] = nb2;
-        */
-        // end for test
-
+        this->base_tm.tm_year = 2025 - 1900;
+        this->base_tm.tm_mon  = 0;
+        this->base_tm.tm_mday = 1;
+        this->base_tm.tm_hour = 0;
+        this->base_tm.tm_min  = 0;
+        this->base_tm.tm_sec  = 0;
     }
     ~NeighborManager() {}
     void add(Neighbor nb);
@@ -77,13 +78,17 @@ class NeighborManager {
 };
 
 /***   For Neighbor class    ***/
-inline void Neighbor::updateTime() {
-    clock_gettime(CLOCK_REALTIME, &this->ltime);
+inline void Neighbor::updateTime(long long utime) {
+    this->update_time = utime;
+}
+
+inline long long Neighbor::getUpdateTime() {
+    return this->update_time;
 }
 
 inline void Neighbor::showInfo() {
-    printf("ipaddr:port = %s : %d (%ld.%ld)\n", 
-        this->ip_addr.c_str(), this->port, this->ltime.tv_sec, this->ltime.tv_nsec);
+    printf("ipaddr:port = %s : %d (%lld)\n", 
+        this->ip_addr.c_str(), this->port, this->update_time);
 }
 
 inline std::string Neighbor::getIpAddress() {
@@ -135,6 +140,11 @@ inline std::vector<uint8_t> Neighbor::serialize() {
 
 /***  NeighborManager ***/
 inline void NeighborManager::add(Neighbor nb) {    
+    auto now = std::chrono::system_clock::now();
+    std::time_t  base_time_t = std::mktime(&this->base_tm);
+    auto base_time = std::chrono::system_clock::from_time_t(base_time_t);
+    long long time = std::chrono::duration_cast<std::chrono::seconds>(now - base_time).count();
+    nb.updateTime(time);
     this->nmap[nb.getIpAddress()] = nb;
 }
 
@@ -155,7 +165,6 @@ inline size_t NeighborManager::count() {
 inline bool NeighborManager::find(Neighbor nb) {
     decltype(this->nmap)::iterator it = this->nmap.find(nb.getIpAddress());
     if (it != this->nmap.end()) {
-        it->second.updateTime();
         it->second.showInfo();        
         return true;
     } 
