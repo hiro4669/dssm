@@ -60,6 +60,8 @@ class NeighborManager {
     std::map<std::string, Neighbor> nmap; // key: ipaddress, value: Neighbor
     std::tm base_tm = {};
 
+    void checkExpire();
+
     public:
     NeighborManager() {
         this->base_tm.tm_year = 2025 - 1900;
@@ -148,6 +150,24 @@ inline void NeighborManager::add(Neighbor nb) {
     this->nmap[nb.getIpAddress()] = nb;
 }
 
+inline void NeighborManager::checkExpire() {
+    auto now = std::chrono::system_clock::now();
+    std::time_t  base_time_t = std::mktime(&this->base_tm);
+    auto base_time = std::chrono::system_clock::from_time_t(base_time_t);
+    long long time = std::chrono::duration_cast<std::chrono::seconds>(now - base_time).count();
+
+    for (auto it = this->nmap.begin(); it != this->nmap.end();) {
+        Neighbor nb = it->second;
+        long long update_time = nb.getUpdateTime();
+        if ((time - update_time) > EXPIRE_TIME) {
+            printf("Neighbor %s expired\n", nb.getIpAddress().c_str());
+            it = this->nmap.erase(it);
+        } else {
+            ++it;
+        }
+    }
+}
+
 
 inline Neighbor NeighborManager::getFirst() {
     if (this->nmap.size() > 0) {
@@ -174,7 +194,7 @@ inline bool NeighborManager::find(Neighbor nb) {
 
 
 inline std::vector<uint8_t> NeighborManager::serialize() {
-    printf("serialize invoked\n");
+    this->checkExpire();  // update neighbor based on update time
     std::vector<uint8_t> buffer;
     for (auto it : this->nmap) {
         Neighbor nb = it.second;
@@ -189,21 +209,6 @@ inline std::vector<uint8_t> NeighborManager::serialize() {
     uint32_t total_size = buffer.size() + sizeof(uint32_t);
     buffer.insert(buffer.begin(), reinterpret_cast<uint8_t*>(&total_size),
             reinterpret_cast<uint8_t*>(&total_size) + sizeof(uint32_t));
-
-
-    /*
-    int idx = 2;
-    for (auto it : this->nmap) {
-        Neighbor nb = it.second;
-        std::string ip_addr_str = nb.getIpAddress();
-        std::string port_str = std::to_string(nb.getPort());        
-        //std::cout << port_str << std::endl;
-        memcpy(&buffer[idx], ip_addr_str.c_str(), ip_addr_str.length());
-        idx += 16;
-        memcpy(&buffer[idx], port_str.c_str(), port_str.length());
-        idx += 5;
-    }
-    */
 
     return buffer;
 }

@@ -17,6 +17,8 @@
 #define DMSG_RES      1001
 #define DMSG_MAX_SIZE 1024
 
+#define EXPIRE_TIME 10  // neighborの有効時間(秒)
+
 /* proxy-clientで使うコマンド群 */
 typedef enum {
 	WRITE_MODE = 1,  // 書き込み時

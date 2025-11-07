@@ -1246,6 +1246,10 @@ void ProxyServer::handle_msg() {
                 break;
             }
             case DMC_BR_START: {
+                printf("br_start\n");
+                Neighbor testnb = Neighbor("10.0.0.1", 9999);
+                neighbor_manager.add(testnb);
+
                 update_brdata((uint8_t*)dmsg.data, dmsg.data_len);
                 dmsg.msg_type = dmsg.res_type;
                 dmsg.cmd_type = DMSG_RES;
@@ -1265,8 +1269,8 @@ void ProxyServer::handle_msg() {
 
                 if (count > 0) {
                     // for test
-                    Neighbor testnb = Neighbor("10.0.0.1", 9999);
-                    neighbor_manager.add(testnb);
+                    //Neighbor testnb = Neighbor("10.0.0.1", 9999);
+                    //neighbor_manager.add(testnb);
                     // end for test
                     std::vector<uint8_t> buffer = neighbor_manager.serialize();
 
