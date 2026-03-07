@@ -137,7 +137,7 @@ public:
                 idx += data_len;
             }
             iList.push_back(bInfo);
-            printf("i = %d\n", i);
+            //printf("i = %d\n", i);
         }
         //printf("host count = %ld\n", iList.size());
 

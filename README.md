@@ -47,6 +47,9 @@ If you want to use buffered features (recommended if you use WiFi)
 #### Broadcast Example
 If you want to use broadcast function, you can exchange any typed data using template. Also, by default, broadcast function exchanges IP Address and Port Number. If you specify the type as template, you can exchange the data in addition to IP Address and Port Number.
 
+If you have multiple ip adresses and want to specify the specific ip address, you can pass the ip address as
+`dssm-proxy -b 10.10.10.10`
+
 Example:
 For sending
 ```

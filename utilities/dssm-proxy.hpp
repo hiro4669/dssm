@@ -153,7 +153,7 @@ private:
 	void send_br_msg(BROADCAST_SENDINFO *binfo, char *msg, int msg_len);
 	void sbr_close(BROADCAST_SENDINFO *binfo);
 	uint16_t create_msg(char* buffer, std::string ipaddr_str, int port);	
-	void send_notification();	
+	void send_notification(std::string ip_addr = "");	
 
 
 	/* for broadcast receiving */
@@ -182,7 +182,7 @@ public:
 	ProxyServer();
 	~ProxyServer();
 	bool init();
-	bool run(bool notify = false);
+	bool run(bool notify = false, std::string ip_addr = "");
 	bool server_close();
 	bool client_close();
 	void handleCommand();
@@ -203,12 +203,13 @@ public:
 };
 
 /* get ip address information */
-static std::pair<std::string, std::string> get_interface_info() {
+static std::pair<std::string, std::string> get_interface_info(std::string target_ip_addr = "") {
     struct ifaddrs *addrs = nullptr;
     getifaddrs(&addrs);
-    char buffer[INET_ADDRSTRLEN]={0,0,0,0};
+    char buffer[INET_ADDRSTRLEN] = {};
     uint32_t br_addr = 0;
     uint32_t ip_addr = 0;
+
     sa_family_t address_family = 0;
     for (auto p = addrs; p != nullptr; p=p->ifa_next) {
 		if (p->ifa_addr == nullptr) continue;
@@ -219,6 +220,10 @@ static std::pair<std::string, std::string> get_interface_info() {
 		uint32_t ip_addr_tmp = ((struct sockaddr_in*)p->ifa_addr)->sin_addr.s_addr;        
         if ((ip_addr_tmp & 0xff) == 127) continue;
         if ((ip_addr_tmp & 0xff) == 169) continue;
+
+        if (target_ip_addr != "" && (target_ip_addr != inet_ntop(AF_INET, &ip_addr_tmp, buffer, INET_ADDRSTRLEN))) {
+            continue;
+        }
         
         ip_addr = ip_addr_tmp;
         

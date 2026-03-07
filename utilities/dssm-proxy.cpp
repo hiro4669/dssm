@@ -1186,9 +1186,9 @@ uint16_t ProxyServer::create_msg(char* buffer, std::string ipaddr_str, int port)
 
 
 
-void ProxyServer::send_notification() {
+void ProxyServer::send_notification(std::string ip_addr) {
 	//std::cout << "send notification start" << std::endl;
-	std::pair<std::string, std::string> ainfo = get_interface_info();
+	std::pair<std::string, std::string> ainfo = get_interface_info(ip_addr);
 	if (ainfo.first.empty()) {
         fprintf(stderr, "something happend\n");
         return;
@@ -1246,9 +1246,9 @@ void ProxyServer::handle_msg() {
                 break;
             }
             case DMC_BR_START: {
-                printf("br_start\n");
-                Neighbor testnb = Neighbor("10.0.0.1", 9999);
-                neighbor_manager.add(testnb);
+                //printf("br_start\n");
+                //Neighbor testnb = Neighbor("10.0.0.1", 9999);
+                //neighbor_manager.add(testnb);
 
                 update_brdata((uint8_t*)dmsg.data, dmsg.data_len);
                 dmsg.msg_type = dmsg.res_type;
@@ -1309,7 +1309,7 @@ void ProxyServer::handle_msg() {
 
 
 
-bool ProxyServer::run(bool notify)
+bool ProxyServer::run(bool notify, std::string ip_addr)
 {
 	if (notify) {
 		if (!initSSM()) {
@@ -1322,8 +1322,8 @@ bool ProxyServer::run(bool notify)
 		});
 		recv_noifth.detach();
 
-		std::thread send_notith([this]() {			
-			this->send_notification();
+		std::thread send_notith([this, ip_addr]() {			
+			this->send_notification(ip_addr);
 		});
 		send_notith.detach();
 	}
@@ -1419,17 +1419,20 @@ int main(int argc, char* argv[])
 	std::cout << " --------------------------------------------------\n";
 	std::cout << " DSSM ( Distribute Streaming data Sharing Manager )\n";
 	std::cout << " Ver. 1.3\n";
-	std::cout << " broadcast option available (./dssm-proxy -b)\n";
+	std::cout << " broadcast option available (dssm-proxy -b [ip addr])\n";
 	std::cout << " --------------------------------------------------\n\n";
 
 
+    std::string ip_addr = "";
 	/* Use Broadcast Feature */
 	bool use_broadcast = false;
 	if (argc > 1 && std::string(argv[1]) == "-b") {
 		std::cout << "use broadcast " << std::endl;
+        if (argc > 2) {
+            ip_addr = std::string(argv[2]);
+        }
 		use_broadcast = true;
 	}
-	
 
 	struct sigaction sa;
     sigemptyset(&sa.sa_mask);
@@ -1439,7 +1442,7 @@ int main(int argc, char* argv[])
 
 	pserver = new ProxyServer();
 	pserver->init();
-	pserver->run(use_broadcast);	
+	pserver->run(use_broadcast, ip_addr);	
 	if (pserver != nullptr) {
 		delete pserver;
 	}
