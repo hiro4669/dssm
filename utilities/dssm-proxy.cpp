@@ -1186,9 +1186,9 @@ uint16_t ProxyServer::create_msg(char* buffer, std::string ipaddr_str, int port)
 
 
 
-void ProxyServer::send_notification(std::string ip_addr) {
+void ProxyServer::send_notification(std::string target_if) {
 	//std::cout << "send notification start" << std::endl;
-	std::pair<std::string, std::string> ainfo = get_interface_info(ip_addr);
+	std::pair<std::string, std::string> ainfo = get_interface_info(target_if);
 	if (ainfo.first.empty()) {
         fprintf(stderr, "something happend\n");
         return;
@@ -1309,7 +1309,7 @@ void ProxyServer::handle_msg() {
 
 
 
-bool ProxyServer::run(bool notify, std::string ip_addr)
+bool ProxyServer::run(bool notify, std::string target_if)
 {
 	if (notify) {
 		if (!initSSM()) {
@@ -1322,8 +1322,8 @@ bool ProxyServer::run(bool notify, std::string ip_addr)
 		});
 		recv_noifth.detach();
 
-		std::thread send_notith([this, ip_addr]() {			
-			this->send_notification(ip_addr);
+		std::thread send_notith([this, target_if]() {			
+			this->send_notification(target_if);
 		});
 		send_notith.detach();
 	}
@@ -1423,13 +1423,13 @@ int main(int argc, char* argv[])
 	std::cout << " --------------------------------------------------\n\n";
 
 
-    std::string ip_addr = "";
+    std::string target_if = "";
 	/* Use Broadcast Feature */
 	bool use_broadcast = false;
 	if (argc > 1 && std::string(argv[1]) == "-b") {
 		std::cout << "use broadcast " << std::endl;
         if (argc > 2) {
-            ip_addr = std::string(argv[2]);
+            target_if = std::string(argv[2]);
         }
 		use_broadcast = true;
 	}
@@ -1442,7 +1442,7 @@ int main(int argc, char* argv[])
 
 	pserver = new ProxyServer();
 	pserver->init();
-	pserver->run(use_broadcast, ip_addr);	
+	pserver->run(use_broadcast, target_if);	
 	if (pserver != nullptr) {
 		delete pserver;
 	}

@@ -203,7 +203,7 @@ public:
 };
 
 /* get ip address information */
-static std::pair<std::string, std::string> get_interface_info(std::string target_ip_addr = "") {
+static std::pair<std::string, std::string> get_interface_info(std::string target_if = "") {
     struct ifaddrs *addrs = nullptr;
     getifaddrs(&addrs);
     char buffer[INET_ADDRSTRLEN] = {};
@@ -221,16 +221,25 @@ static std::pair<std::string, std::string> get_interface_info(std::string target
         if ((ip_addr_tmp & 0xff) == 127) continue;
         if ((ip_addr_tmp & 0xff) == 169) continue;
 
-        if (target_ip_addr != "" && (target_ip_addr != inet_ntop(AF_INET, &ip_addr_tmp, buffer, INET_ADDRSTRLEN))) {
+//        if (target_ip_addr != "" && (target_ip_addr != inet_ntop(AF_INET, &ip_addr_tmp, buffer, INET_ADDRSTRLEN))) {
+//           continue;
+//      }
+//
+        
+        if (target_if != "" && target_if != p->ifa_name) {
+            printf("ifa-name %s skipped...\n", p->ifa_name);
             continue;
+        } else {
+            printf("if name target = %s\n", p->ifa_name);
         }
+
+
         
         ip_addr = ip_addr_tmp;
         
         uint32_t netmask = ((struct sockaddr_in*)p->ifa_netmask)->sin_addr.s_addr;
         uint32_t net_addr = ip_addr & netmask;
         br_addr = net_addr | ~netmask;
-            
     }
     
     if (br_addr > 0) {        
