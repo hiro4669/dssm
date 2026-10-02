@@ -36,7 +36,7 @@ inline void setSigInt(){ signal(SIGINT, ctrlC); }
 typedef struct {
     int ival;
     double dval;
-    char cval[32];
+    char cval[260];
 } param;
 
 int main() {
@@ -49,14 +49,6 @@ int main() {
 
     sleepSSM(1); // wait for init
                  //
-    /*
-    if (con.receiveBroadcast()) {
-        printf("ival = %d\n", con.br_data.ival);
-        printf("dval = %f\n", con.br_data.dval);
-        printf("cval = %s\n", con.br_data.cval);;
-    }
-    */
-
     std::vector<DSSMApi<intSsm_k, props_p, param>::BrInfo> iList = con.receiveBroadcast();
     printf("info count = %ld\n", iList.size());
     for (auto bInfo : iList) {

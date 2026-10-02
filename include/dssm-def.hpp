@@ -8,14 +8,16 @@
 #define SERVER_PORT 8080	   /* サーバ用PORT */
 #define SERVER_IP 0x00000000UL /* サーバ用待ち受けIP */
 
-#define BR_PORT 12345          /* ブロードキャスト待受ポート */
-#define BR_MAX_SIZE 256      /* ブロードキャストメッセージの最大長 */
-
 #define PRQ_KEY 0x3293
 
 #define DMSG_CMD      1000
 #define DMSG_RES      1001
 #define DMSG_MAX_SIZE 1024
+
+#define BR_PORT 12345          /* ブロードキャスト待受ポート */
+#define BR_MAX_SIZE (256 + DMSG_MAX_SIZE)      /* ブロードキャストメッセージの最大長 */
+
+#define SEND_DURATION 5
 
 #define EXPIRE_TIME 10  // neighborの有効時間(秒)
 

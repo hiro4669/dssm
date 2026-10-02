@@ -1166,6 +1166,15 @@ uint16_t ProxyServer::create_msg(char* buffer, std::string ipaddr_str, int port)
     len += 4;
 
     {
+
+        /*
+        printf("brdata_ken = %d\n", brdata_len);
+        std::cout << "ipaddr: " << ipaddr_str << std::endl;
+        std::cout << "port:   " << port_str << std::endl;
+        printf("len = %d\n", len);
+        printf("max size = %d\n", BR_MAX_SIZE);
+        */
+
         std::lock_guard<std::mutex> lock(mtx);
         len += brdata_len;
         int idx = 0;
@@ -1179,6 +1188,13 @@ uint16_t ProxyServer::create_msg(char* buffer, std::string ipaddr_str, int port)
 
         idx += port_str.length();
         memcpy(&buffer[idx], br_buffer, brdata_len);
+
+        /*
+        for (int i = 0; i < idx+brdata_len; ++i) {
+            if (i % 16 == 0) printf("\n");
+            printf("%02x ", buffer[i]);
+        }
+        */
     }
 
 	return len;
@@ -1206,11 +1222,10 @@ void ProxyServer::send_notification(std::string target_if) {
 
 
 	while (true) {
-		//std::cout << "send..." << std::endl;
         create_msg(buffer, ainfo.first, SERVER_PORT); // specify self ip
         uint16_t total_len = (uint16_t)(buffer[0] << 8 | buffer[1]);    
 		this->send_br_msg(&binfo, buffer, total_len);
-		sleep(5);
+		sleep(SEND_DURATION);
 	}
 
 	this->sbr_close(&binfo);
