@@ -11,7 +11,7 @@ AM_LDFLAGS = -L../../src ../../src/libssm.la -lm
 
 noinst_HEADERS = intSsm.h
 
-noinst_PROGRAMS = read_buffer_test read_proxy_test write_proxy_test read_broad_test
+noinst_PROGRAMS = read_buffer_test read_proxy_test write_proxy_test read_broad_test OpenAndWriteProxyTest
 
 ssmWriteSample_SOURCES = ssmWriteSample.cpp
 ssmReadSample_SOURCES =  ssmReadSample.cpp
@@ -20,4 +20,5 @@ read_buffer_test_SOURCES = read_buffer_test.cpp
 read_proxy_test_SOURCES = read_proxy_test.cpp
 write_proxy_test_SOURCES = write_proxy_test.cpp
 read_broad_test_SOURCES = read_broad_test.cpp
+OpenAndWriteProxyTest_SOURCES = OpenAndWriteProxyTest.cpp
 

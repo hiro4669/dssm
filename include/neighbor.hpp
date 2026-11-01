@@ -9,6 +9,7 @@
 #include <netinet/in.h>
 #include <vector>
 #include <chrono>
+#include <mutex>
 
 #include "dssm-def.hpp"
 
@@ -59,6 +60,7 @@ class NeighborManager {
     private:
     std::map<std::string, Neighbor> nmap; // key: ipaddress, value: Neighbor
     std::tm base_tm = {};
+    std::mutex nmtx;
 
     void checkExpire();
 
@@ -75,7 +77,7 @@ class NeighborManager {
     void add(Neighbor nb);
     bool find(Neighbor nb);
     size_t count();
-    std::vector<uint8_t> serialize();
+    std::vector<uint8_t> serialize(size_t max_size);
     Neighbor getFirst();
 };
 
@@ -142,6 +144,8 @@ inline std::vector<uint8_t> Neighbor::serialize() {
 
 /***  NeighborManager ***/
 inline void NeighborManager::add(Neighbor nb) {    
+    std::lock_guard<std::mutex> lock(this->nmtx); // get lock
+                                                  //
     auto now = std::chrono::system_clock::now();
     std::time_t  base_time_t = std::mktime(&this->base_tm);
     auto base_time = std::chrono::system_clock::from_time_t(base_time_t);
@@ -170,6 +174,7 @@ inline void NeighborManager::checkExpire() {
 
 
 inline Neighbor NeighborManager::getFirst() {
+    std::lock_guard<std::mutex> lock(this->nmtx);
     if (this->nmap.size() > 0) {
         return this->nmap.begin()->second;
     } else {
@@ -178,11 +183,12 @@ inline Neighbor NeighborManager::getFirst() {
 }
 
 inline size_t NeighborManager::count() {
-    //return this->nblist.size();
+    std::lock_guard<std::mutex> lock(this->nmtx);
     return this->nmap.size();
 }
 
 inline bool NeighborManager::find(Neighbor nb) {
+    std::lock_guard<std::mutex> lock(this->nmtx);
     decltype(this->nmap)::iterator it = this->nmap.find(nb.getIpAddress());
     if (it != this->nmap.end()) {
         it->second.showInfo();        
@@ -193,16 +199,22 @@ inline bool NeighborManager::find(Neighbor nb) {
 
 
 
-inline std::vector<uint8_t> NeighborManager::serialize() {
+inline std::vector<uint8_t> NeighborManager::serialize(size_t max_size) {
+    std::lock_guard<std::mutex> lock(this->nmtx);
     this->checkExpire();  // update neighbor based on update time
     std::vector<uint8_t> buffer;
-    for (auto it : this->nmap) {
-        Neighbor nb = it.second;
-        std::vector<uint8_t> v = nb.serialize();
-        buffer.insert(buffer.end(), v.begin(), v.end());
-    }
 
-    uint16_t count = this->count();
+    uint16_t count = 0;
+    const size_t header_size = sizeof(uint32_t) + sizeof(uint16_t);
+    for (auto &it : this->nmap) {
+        std::vector<uint8_t> v = it.second.serialize();
+        if (header_size + buffer.size() + v.size() > max_size) {
+            fprintf(stderr, "neighbor %s skipped: buffer full\n", it.first.c_str());
+            continue;
+        }
+        buffer.insert(buffer.end(), v.begin(), v.end());
+        ++count;
+    }
     buffer.insert(buffer.begin(), reinterpret_cast<uint8_t*>(&count),
             reinterpret_cast<uint8_t*>(&count) + sizeof(uint16_t));
 

@@ -691,6 +691,7 @@ bool PConnector::sendMsgToServer(int cmd_type, ssm_msg *msg) {
 	if (msg == NULL) {
 		msg = &msgbuf;
 	}
+
 	msg->msg_type = 1; // dummy
 	msg->res_type = 8;
 	msg->cmd_type = cmd_type;

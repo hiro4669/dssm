@@ -89,7 +89,8 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-noinst_PROGRAMS = ssmReadSample$(EXEEXT) ssmWriteSample$(EXEEXT)
+noinst_PROGRAMS = ssmReadSample$(EXEEXT) ssmWriteSample$(EXEEXT) \
+	CreateAndRead$(EXEEXT) OpenAndWrite$(EXEEXT)
 subdir = samples/Cpp_Sample
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/libtool.m4 \
@@ -105,13 +106,19 @@ CONFIG_HEADER = $(top_builddir)/include/config.h
 CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 PROGRAMS = $(noinst_PROGRAMS)
-am_ssmReadSample_OBJECTS = ssmReadSample.$(OBJEXT)
-ssmReadSample_OBJECTS = $(am_ssmReadSample_OBJECTS)
-ssmReadSample_LDADD = $(LDADD)
+am_CreateAndRead_OBJECTS = CreateAndRead.$(OBJEXT)
+CreateAndRead_OBJECTS = $(am_CreateAndRead_OBJECTS)
+CreateAndRead_LDADD = $(LDADD)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
 am__v_lt_1 = 
+am_OpenAndWrite_OBJECTS = OpenAndWrite.$(OBJEXT)
+OpenAndWrite_OBJECTS = $(am_OpenAndWrite_OBJECTS)
+OpenAndWrite_LDADD = $(LDADD)
+am_ssmReadSample_OBJECTS = ssmReadSample.$(OBJEXT)
+ssmReadSample_OBJECTS = $(am_ssmReadSample_OBJECTS)
+ssmReadSample_LDADD = $(LDADD)
 am_ssmWriteSample_OBJECTS = ssmWriteSample.$(OBJEXT)
 ssmWriteSample_OBJECTS = $(am_ssmWriteSample_OBJECTS)
 ssmWriteSample_LDADD = $(LDADD)
@@ -130,7 +137,8 @@ am__v_at_1 =
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)/include
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__maybe_remake_depfiles = depfiles
-am__depfiles_remade = ./$(DEPDIR)/ssmReadSample.Po \
+am__depfiles_remade = ./$(DEPDIR)/CreateAndRead.Po \
+	./$(DEPDIR)/OpenAndWrite.Po ./$(DEPDIR)/ssmReadSample.Po \
 	./$(DEPDIR)/ssmWriteSample.Po
 am__mv = mv -f
 CXXCOMPILE = $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
@@ -151,8 +159,10 @@ AM_V_CXXLD = $(am__v_CXXLD_@AM_V@)
 am__v_CXXLD_ = $(am__v_CXXLD_@AM_DEFAULT_V@)
 am__v_CXXLD_0 = @echo "  CXXLD   " $@;
 am__v_CXXLD_1 = 
-SOURCES = $(ssmReadSample_SOURCES) $(ssmWriteSample_SOURCES)
-DIST_SOURCES = $(ssmReadSample_SOURCES) $(ssmWriteSample_SOURCES)
+SOURCES = $(CreateAndRead_SOURCES) $(OpenAndWrite_SOURCES) \
+	$(ssmReadSample_SOURCES) $(ssmWriteSample_SOURCES)
+DIST_SOURCES = $(CreateAndRead_SOURCES) $(OpenAndWrite_SOURCES) \
+	$(ssmReadSample_SOURCES) $(ssmWriteSample_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -317,6 +327,8 @@ AM_LDFLAGS = -L../../src ../../src/libssm.la -lm
 noinst_HEADERS = intSsm.h
 ssmWriteSample_SOURCES = ssmWriteSample.cpp
 ssmReadSample_SOURCES = ssmReadSample.cpp
+CreateAndRead_SOURCES = CreateAndRead.cpp
+OpenAndWrite_SOURCES = OpenAndWrite.cpp
 all: all-am
 
 .SUFFIXES:
@@ -360,6 +372,14 @@ clean-noinstPROGRAMS:
 	echo " rm -f" $$list; \
 	rm -f $$list
 
+CreateAndRead$(EXEEXT): $(CreateAndRead_OBJECTS) $(CreateAndRead_DEPENDENCIES) $(EXTRA_CreateAndRead_DEPENDENCIES) 
+	@rm -f CreateAndRead$(EXEEXT)
+	$(AM_V_CXXLD)$(CXXLINK) $(CreateAndRead_OBJECTS) $(CreateAndRead_LDADD) $(LIBS)
+
+OpenAndWrite$(EXEEXT): $(OpenAndWrite_OBJECTS) $(OpenAndWrite_DEPENDENCIES) $(EXTRA_OpenAndWrite_DEPENDENCIES) 
+	@rm -f OpenAndWrite$(EXEEXT)
+	$(AM_V_CXXLD)$(CXXLINK) $(OpenAndWrite_OBJECTS) $(OpenAndWrite_LDADD) $(LIBS)
+
 ssmReadSample$(EXEEXT): $(ssmReadSample_OBJECTS) $(ssmReadSample_DEPENDENCIES) $(EXTRA_ssmReadSample_DEPENDENCIES) 
 	@rm -f ssmReadSample$(EXEEXT)
 	$(AM_V_CXXLD)$(CXXLINK) $(ssmReadSample_OBJECTS) $(ssmReadSample_LDADD) $(LIBS)
@@ -374,6 +394,8 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/CreateAndRead.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/OpenAndWrite.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ssmReadSample.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ssmWriteSample.Po@am__quote@ # am--include-marker
 
@@ -534,7 +556,9 @@ clean-am: clean-generic clean-libtool clean-noinstPROGRAMS \
 	mostlyclean-am
 
 distclean: distclean-am
-		-rm -f ./$(DEPDIR)/ssmReadSample.Po
+		-rm -f ./$(DEPDIR)/CreateAndRead.Po
+	-rm -f ./$(DEPDIR)/OpenAndWrite.Po
+	-rm -f ./$(DEPDIR)/ssmReadSample.Po
 	-rm -f ./$(DEPDIR)/ssmWriteSample.Po
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
@@ -581,7 +605,9 @@ install-ps-am:
 installcheck-am:
 
 maintainer-clean: maintainer-clean-am
-		-rm -f ./$(DEPDIR)/ssmReadSample.Po
+		-rm -f ./$(DEPDIR)/CreateAndRead.Po
+	-rm -f ./$(DEPDIR)/OpenAndWrite.Po
+	-rm -f ./$(DEPDIR)/ssmReadSample.Po
 	-rm -f ./$(DEPDIR)/ssmWriteSample.Po
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic

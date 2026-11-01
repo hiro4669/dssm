@@ -505,6 +505,7 @@ int msq_loop( void )
 				printf( "message:open!\n" );
 				printf( "   |   :name=%s id=%d\n", msg.name, msg.suid );
 			}
+
 			slist = search_SSM_List( msg.name, msg.suid );
 			if( slist )
 			{

@@ -4,6 +4,7 @@
 #include <string.h>
 #include <signal.h>
 #include <arpa/inet.h>
+#include <getopt.h>
 
 #include <thread>
 #include <utility>
@@ -23,13 +24,10 @@
 
 #include "ssm-time.h"
 #include "ssm.h"
-//#include "printlog.hpp"
-//#include "libssm.h"
 
 #include "dssm-proxy.hpp"
 #include "dssm-utility.hpp"
 
-//#include "broadcast.hpp"
 
 
 #define DEBUG 0
@@ -49,7 +47,6 @@ DataCommunicator::DataCommunicator(uint16_t nport, char *mData, uint64_t d_size,
 	// streamはコピーされる.
 	this->pstream = pstream;
 	this->mType = type;
-	this->proxy = proxy;
 	this->isTCP = isTCP;
 
 	this->buf = (char *)malloc(sizeof(thrd_msg));
@@ -245,8 +242,8 @@ void DataCommunicator::handleBuffer()
 				fprintf(stderr, "[%s] SSMApi::read error.\n", pstream->getStreamName());
 			}
 			char *p = mData;
-			proxy->writeInt(&p, pstream->timeId);
-			proxy->writeDouble(&p, pstream->time);
+			writeInt(&p, pstream->timeId);
+			writeDouble(&p, pstream->time);
 			if (!sendBulkData(mData, mFullDataSize))
 			{
 				fprintf( stderr, "[%d] ", count );
@@ -865,7 +862,6 @@ void ProxyServer::handleCommand()
 			}
 
 			SSM_open_mode openMode = (SSM_open_mode)(msg.cmd_type & SSM_MODE_MASK);
-
 			switch (openMode) {
 				case SSM_READ: {
 					setSSMType(READ_MODE);
@@ -897,7 +893,8 @@ void ProxyServer::handleCommand()
 			else
 			{
 				stream.setDataBuffer(&mData[ssmHeaderSize], mDataSize);
-				if (!stream.open(msg.name, msg.suid))
+				//if (!stream.open(msg.name, msg.suid))
+				if (!stream.open(msg.name, msg.suid, openMode))
 				{
 					fprintf(stderr, "stream open failed\n");
 					if (openMode == SSM_READ_BUFFER) ssmHeaderSize -= sizeof(SSM_tid);
@@ -1057,7 +1054,7 @@ std::tuple<std::string , std::string, uint16_t> ProxyServer::parse_data(char* bu
         return {"", "",0};
     }
     int idx = 0;
-    uint16_t len = (uint16_t)(buf[idx] << 8 | buf[idx + 1]);
+    uint16_t len = (uint16_t)((uint8_t)buf[idx] << 8 | (uint8_t)buf[idx + 1]);
     if (len != msg_len) {
         fprintf(stderr, "something happend in parse\n");
         return {"", "", 0};
@@ -1202,7 +1199,7 @@ uint16_t ProxyServer::create_msg(char* buffer, std::string ipaddr_str, int port)
 
 
 
-void ProxyServer::send_notification(std::string target_if) {
+void ProxyServer::send_notification(uint32_t duration, std::string target_if) {
 	//std::cout << "send notification start" << std::endl;
 	std::pair<std::string, std::string> ainfo = get_interface_info(target_if);
 	if (ainfo.first.empty()) {
@@ -1223,9 +1220,10 @@ void ProxyServer::send_notification(std::string target_if) {
 
 	while (true) {
         create_msg(buffer, ainfo.first, SERVER_PORT); // specify self ip
-        uint16_t total_len = (uint16_t)(buffer[0] << 8 | buffer[1]);    
+        uint16_t total_len = (uint16_t)((uint8_t)buffer[0] << 8 | (uint8_t)buffer[1]);    
 		this->send_br_msg(&binfo, buffer, total_len);
-		sleep(SEND_DURATION);
+        //printf("send....\n");
+		sleep(duration);
 	}
 
 	this->sbr_close(&binfo);
@@ -1287,7 +1285,7 @@ void ProxyServer::handle_msg() {
                     //Neighbor testnb = Neighbor("10.0.0.1", 9999);
                     //neighbor_manager.add(testnb);
                     // end for test
-                    std::vector<uint8_t> buffer = neighbor_manager.serialize();
+                    std::vector<uint8_t> buffer = neighbor_manager.serialize(DMSG_MAX_SIZE);
 
                     /*
                     for (int i = 0; i < buffer.size(); ++i) {
@@ -1324,9 +1322,10 @@ void ProxyServer::handle_msg() {
 
 
 
-bool ProxyServer::run(bool notify, std::string target_if)
+bool ProxyServer::run(struct st_opt *sopt)
 {
-	if (notify) {
+	//if (notify) {
+	if (sopt->broadcast) {
 		if (!initSSM()) {
 			fprintf(stderr, "init ssm error in ssm-proxy run\n");
 			return false;
@@ -1337,8 +1336,8 @@ bool ProxyServer::run(bool notify, std::string target_if)
 		});
 		recv_noifth.detach();
 
-		std::thread send_notith([this, target_if]() {			
-			this->send_notification(target_if);
+		std::thread send_notith([this, sopt]() {
+            this->send_notification(sopt->duration > 0 ? sopt->duration : SEND_DURATION, sopt->target_if); 
 		});
 		send_notith.detach();
 	}
@@ -1362,14 +1361,12 @@ bool ProxyServer::run(bool notify, std::string target_if)
 			this->server_close();
 			this->handleCommand();
 			this->client_close();
-			//fprintf(stderr, "end of process");
 			exit(1);
 		}
 		else
 		{ // parent
 			this->client_close();
 			this->pids.push_back(child_pid);
-			//printf("child_pid = %d\n", child_pid);
 		}
 	}
 	this->server_close();	
@@ -1379,7 +1376,6 @@ bool ProxyServer::run(bool notify, std::string target_if)
 
 void ProxyServer::setupSigHandler()
 {
-	//std::cout << "end" << std::endl;
 	struct sigaction act;
 	memset(&act, 0, sizeof(act));				/* sigaction構造体をとりあえずクリア */
 	act.sa_handler = &ProxyServer::catchSignal; /* SIGCHLD発生時にcatch_SIGCHLD()を実行 */
@@ -1426,6 +1422,54 @@ static void signal_handler(int signum) {
 
 }
 
+static void print_help(char *name) {
+    fprintf(stderr, "usage: %s\n", name);
+    fprintf(stderr, "\t -bInterface: use broadcast with Interface (ex. -beth0). Interface can be omitted\n");
+    fprintf(stderr, "\t -d time     : specify duration (ex. 5) for broadcast polling\n");
+    fprintf(stderr, "\t -h          : show help\n");
+}
+
+
+static bool process_arg(int argc, char* argv[], struct st_opt *sopt) {
+
+    struct option longopts[] = {
+        {"verbose", no_argument, NULL, 'v'},
+        {"broadcast", optional_argument, NULL, 'b'},
+        {"duration", required_argument, NULL, 'd'},
+        {"help", no_argument},
+        {0, 0, 0, 0},
+    };
+
+    int opt = 0;
+    while ((opt = getopt_long(argc, argv, "vb::hd:", longopts, NULL)) != -1) {
+        switch (opt) {
+            case 'v': {
+                sopt->verbose = true;
+                break;
+            }
+            case 'b': {
+                sopt->broadcast = true;
+                if (optarg) {
+                    sopt->target_if = std::string(optarg);
+                } 
+                break;
+            }
+            case 'd': {
+                sopt->duration = std::stoi(optarg);
+                break;
+            }
+            case 'h': {
+                print_help(argv[0]);
+                return false;
+            }
+            default: {
+                break;
+            }
+        }
+    }
+
+    return true;
+}
 
 
 int main(int argc, char* argv[])
@@ -1433,21 +1477,14 @@ int main(int argc, char* argv[])
 	std::cout << std::endl;
 	std::cout << " --------------------------------------------------\n";
 	std::cout << " DSSM ( Distribute Streaming data Sharing Manager )\n";
-	std::cout << " Ver. 1.3\n";
-	std::cout << " broadcast option available (dssm-proxy -b [ip addr])\n";
+	std::cout << " Ver. 1.4\n";
+	std::cout << " dssm_proxy -help more details\n";
 	std::cout << " --------------------------------------------------\n\n";
 
-
-    std::string target_if = "";
-	/* Use Broadcast Feature */
-	bool use_broadcast = false;
-	if (argc > 1 && std::string(argv[1]) == "-b") {
-		std::cout << "use broadcast " << std::endl;
-        if (argc > 2) {
-            target_if = std::string(argv[2]);
-        }
-		use_broadcast = true;
-	}
+    struct st_opt sopt = {false, false, "", -1};
+    if(!process_arg(argc, argv, &sopt)) {
+        exit(1);
+    }
 
 	struct sigaction sa;
     sigemptyset(&sa.sa_mask);
@@ -1457,7 +1494,8 @@ int main(int argc, char* argv[])
 
 	pserver = new ProxyServer();
 	pserver->init();
-	pserver->run(use_broadcast, target_if);	
+    pserver->run(&sopt);
+
 	if (pserver != nullptr) {
 		delete pserver;
 	}

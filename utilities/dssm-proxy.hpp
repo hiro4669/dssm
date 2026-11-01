@@ -56,6 +56,14 @@ struct BROADCAST_RECVINFO {
     struct sockaddr_in addr;
 };
 
+/* 起動時のオプション*/
+struct st_opt {
+    bool verbose;
+    bool broadcast;
+    std::string target_if;
+    int duration;
+};
+
 class ProxyServer;
 
 class DataCommunicator :  public Thread
@@ -85,7 +93,6 @@ public:
 	bool isTCP;
 
 	SSMApiBase *pstream;
-	ProxyServer *proxy;
 
 	bool sopen();
 	bool rwait();
@@ -153,7 +160,7 @@ private:
 	void send_br_msg(BROADCAST_SENDINFO *binfo, char *msg, int msg_len);
 	void sbr_close(BROADCAST_SENDINFO *binfo);
 	uint16_t create_msg(char* buffer, std::string ipaddr_str, int port);	
-	void send_notification(std::string ip_addr = "");	
+	void send_notification(uint32_t duration, std::string target_if = "");	
 
 
 	/* for broadcast receiving */
@@ -182,7 +189,8 @@ public:
 	ProxyServer();
 	~ProxyServer();
 	bool init();
-	bool run(bool notify = false, std::string ip_addr = "");
+	//bool run(bool notify = false, std::string ip_addr = "");
+	bool run(struct st_opt *sopt);
 	bool server_close();
 	bool client_close();
 	void handleCommand();
@@ -210,6 +218,7 @@ static std::pair<std::string, std::string> get_interface_info(std::string target
     uint32_t br_addr = 0;
     uint32_t ip_addr = 0;
 
+
     sa_family_t address_family = 0;
     for (auto p = addrs; p != nullptr; p=p->ifa_next) {
 		if (p->ifa_addr == nullptr) continue;
@@ -221,10 +230,6 @@ static std::pair<std::string, std::string> get_interface_info(std::string target
         if ((ip_addr_tmp & 0xff) == 127) continue;
         if ((ip_addr_tmp & 0xff) == 169) continue;
 
-//        if (target_ip_addr != "" && (target_ip_addr != inet_ntop(AF_INET, &ip_addr_tmp, buffer, INET_ADDRSTRLEN))) {
-//           continue;
-//      }
-//
         
         if (target_if != "" && target_if != p->ifa_name) {
             printf("ifa-name %s skipped...\n", p->ifa_name);
