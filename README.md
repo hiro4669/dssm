@@ -48,7 +48,12 @@ If you want to use buffered features (recommended if you use WiFi)
 If you want to use broadcast function, you can exchange any typed data using template. Also, by default, broadcast function exchanges IP Address and Port Number. If you specify the type as template, you can exchange the data in addition to IP Address and Port Number.
 
 If you have multiple ip adresses and want to specify the specific ip address, you can pass the interface as
-`dssm-proxy -b eth0`
+`dssm-proxy -beth0`
+
+Don't make a spece between -b and eth0 as `dssm-proxy -b eth0`
+
+In broadcast mode, DSSMProxy repeatedly send messages every 5 seconds. If you want to change this duration, you can change `-d`option such as 
+`dssm-proxy -d 1` // change from 5 to 1 second
 
 Example:
 For sending
