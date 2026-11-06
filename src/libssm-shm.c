@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <sys/time.h>
 #include <stdlib.h>
+#include <errno.h>
 
 #include <sys/sem.h>
 
@@ -208,43 +209,58 @@ SSM_tid shm_get_tid_bottom( ssm_header *shm_p )
 
 /**
  * @brief lock with System V semaphore  
- * @return 1: success, 0: failed
+ * @return 0: success, 1: failed
  */
 static int sem_lock(ssm_header *shm_p) {
 	//fprintf(stderr, "sem_lock is invoked\n");
 	struct sembuf sop;
 	sop.sem_num = 0;
 	sop.sem_op = LOCK;
-	sop.sem_flg = 0;
+	sop.sem_flg = SEM_UNDO;
 
+    while (semop(shm_p->sem_lock_id, &sop, 1) == -1) {
+        if (errno == EINTR) continue; 
+		perror("sem lock_id lock error");
+        return 1;
+    }
+    /*
 	if (semop(shm_p->sem_lock_id, &sop, 1) == -1) {
 		perror("sem lock_id lock error");
 		return 0;
 	}
-	return 1;
+    */
+	return 0;
 }
 
 /**
  * @brief unlock with System V semaphore
- * @return 1: success, 0: failed
+ * @return 0: success, 1: failed
  */
 static int sem_unlock(ssm_header *shm_p) {
 	//fprintf(stderr, "sem_unlock is invoked\n");
 	struct sembuf sop;
 	sop.sem_num = 0;
 	sop.sem_op = UNLOCK;
-	sop.sem_flg = 0;
+	sop.sem_flg = SEM_UNDO;
 
+    while (semop(shm_p->sem_lock_id, &sop, 1) == -1) {
+        if (errno == EINTR) continue;
+		perror("sem lock_id unlock error");
+		return 1;
+    }
+
+    /*
 	if (semop(shm_p->sem_lock_id, &sop, 1) == -1) {
 		perror("sem lock_id unlock error");
-		return 0;
+		return 1;
 	}
-	return 1;
+    */
+	return 0;
 }
 
 /**
  * @brief lock with System V semaphore
- * @return 1: success, 0: failed
+ * @return 0: success, 1: failed
  */
 static int sem_cond_wait(ssm_header *shm_p) {
 	//fprintf(stderr, "sem_cond_lock is invoked\n");
@@ -255,9 +271,9 @@ static int sem_cond_wait(ssm_header *shm_p) {
 
 	if (semop(shm_p->sem_cond_id, &sop, 1) == -1) {
 		perror("sem lock_id lock error");
-		return 0;
+		return 1;
 	}
-	return 1;
+	return 0;
 }
 
 
@@ -302,9 +318,23 @@ static int sem_cond_wait(ssm_header *shm_p) {
 }
 */
 
+/**
+ * @brief cond_wait with System V semaphore
+ * @param shm_p 
+ * @retval 0: success, 1: failed
+ */
 static int sem_cond_broadcast(ssm_header *shm_p) {
 	//fprintf(stderr, "sem_cond_broadcast\n");
 	int semncnt = semctl(shm_p->sem_cond_id, 0, GETNCNT);
+
+    if (semncnt < 0) {
+        perror("semctl GETNCNT error");
+        return 1;
+    }
+    if (semncnt == 0) {
+        return 0; // No processes are waiting, no need to signal
+    }
+
 	struct sembuf sop;
 	sop.sem_num = 0;
 	sop.sem_op = semncnt;
@@ -312,10 +342,10 @@ static int sem_cond_broadcast(ssm_header *shm_p) {
 
 	if (semop(shm_p->sem_cond_id, &sop, 1) == -1) {
 		perror("semop release error");
-		return 0;
+		return 1;
 	}
 
-	return 1;
+	return 0;
 }
 
 /**
@@ -325,7 +355,7 @@ static int sem_cond_broadcast(ssm_header *shm_p) {
 int shm_lock( ssm_header *shm_p )
 {
 	if (USE_SEMAPHORE) {
-		return sem_lock(shm_p);
+		return !sem_lock(shm_p);
 	} else {
 		if( pthread_mutex_lock( &shm_p->mutex ) )
 			return 0;
@@ -340,7 +370,7 @@ int shm_lock( ssm_header *shm_p )
 int shm_unlock( ssm_header *shm_p )
 {
 	if (USE_SEMAPHORE) {
-		return sem_unlock(shm_p);
+		return !sem_unlock(shm_p);
 	} else {
 		if( pthread_mutex_unlock( &shm_p->mutex ) )
 			return 0;
@@ -405,9 +435,8 @@ int shm_cond_wait( ssm_header *shm_p, SSM_tid tid )
 int shm_cond_broadcast( ssm_header *shm_p )
 {
 	if (USE_SEMAPHORE) {
-		return sem_cond_broadcast(shm_p);
+		return !sem_cond_broadcast(shm_p);
 	} else {
-		pthread_cond_broadcast( &shm_p->cond );
-		return 1;
+		return !pthread_cond_broadcast( &shm_p->cond );
 	}
 }

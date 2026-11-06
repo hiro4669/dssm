@@ -598,7 +598,9 @@ SSM_tid writeSSMP( SSM_sid sid, const void *adata, ssmTimeT ytime ,
 	shm_p = shm_get_address( sid );
 	//i = 0;
 	
-	shm_lock( shm_p );
+	//shm_lock( shm_p );
+    if (!shm_lock( shm_p )) return SSM_ERROR_NO_DATA;
+
 	{
 		tid = shm_get_tid_top( shm_p ) + 1;
 
